@@ -1,0 +1,49 @@
+
+@mixin font( $size: 18px, $color : #333333 ){
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: $size;
+	color: $color;
+}
+
+@mixin font-light( $size: 18px, $color : #333333 ){
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: $size;
+	color: $color;
+	font-weight: 100;
+}
+
+@mixin font-bold( $size: 18px, $color : #333333 ){
+	font-family: Helvetica, Arial, sans-serif;
+	font-weight: 800;
+	font-font-style: bold;
+	font-size: $size;
+	color: $color;
+}
+
+
+
+h1, h2 {
+	color: #444444;
+	@include font-bold();
+}
+
+h1{
+	font-size: 40px;
+}
+
+h2 {
+	font-size: 32px;
+}
+
+h3 {
+	@include font(24px, #ccc);
+}
+
+
+p {
+  @include font(16px, #9f9f9f);
+  line-height: 1.5;
+  margin: auto;
+  position: relative;
+}
+

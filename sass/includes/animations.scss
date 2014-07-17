@@ -1,0 +1,54 @@
+/* animations */
+//add escape property when passing into this mixin
+// .animate-default(e("width, color, blah"));
+
+@mixin animate-default($property:all, $time:500ms ){
+  $ease: cubic-bezier(0.385, 0.205, 0.235, 0.835);
+  @include animateMixin($property, $time, $ease);
+}
+
+@mixin animate-StrongEaseOut($property:all, $time:500ms ){
+  $ease: cubic-bezier(0.900, 0.005, 0.000, 1.000);
+  @include animateMixin($property, $time, $ease);
+}
+
+@mixin animate-StrongEaseIn($property:all, $time:500ms ){
+  $ease: cubic-bezier(0.00, 0.75, 0.9, 1.000);
+  @include animateMixin($property, $time, $ease);
+}
+
+@mixin animateMixin($property, $time, $ease){
+  -webkit-transition: all $time $ease;
+       -moz-transition: all $time $ease;
+        -ms-transition: all $time $ease;
+         -o-transition: all $time $ease;
+            transition: all $time $ease;
+
+  -webkit-transition-property: $property;
+     -moz-transition-property: $property;
+       -o-transition-property: $property;
+          transition-property: $property;
+}
+
+
+@mixin animate-height-width($time:500ms ){
+  -webkit-transition: height $time cubic-bezier(0.385, 0.205, 0.235, 0.835);
+       -moz-transition: height $time cubic-bezier(0.385, 0.205, 0.235, 0.835);
+        -ms-transition: height $time cubic-bezier(0.385, 0.205, 0.235, 0.835);
+         -o-transition: height $time cubic-bezier(0.385, 0.205, 0.235, 0.835);
+            transition: height $time cubic-bezier(0.385, 0.205, 0.235, 0.835);
+
+  -webkit-transition: width $time cubic-bezier(0.385, 0.205, 0.235, 0.835);
+       -moz-transition: width $time cubic-bezier(0.385, 0.205, 0.235, 0.835);
+        -ms-transition: width $time cubic-bezier(0.385, 0.205, 0.235, 0.835);
+         -o-transition: width $time cubic-bezier(0.385, 0.205, 0.235, 0.835);
+            transition: width $time cubic-bezier(0.385, 0.205, 0.235, 0.835);
+}
+
+@mixin colorize_bg($color: #FFFFFF, $alpha: 1) {
+    background: hsla(hue($color), saturation($color), lightness($color), $alpha);
+}
+
+@mixin animate{
+  @include animate-default(all, 250ms);
+}

@@ -1,0 +1,50 @@
+// -------
+// SASS
+// Compile with Prepros http://alphapixels.com/prepros/ (free version avail)
+// http://sass-lang.com/documentation/file.SASS_REFERENCE.html
+// -------
+
+// ------- Global variables -------
+@import "includes/variables";
+
+// ------- Mixins functions -------
+@import "includes/mixins";
+@import "includes/animations";
+
+//------- import HTML5 Boiler plate top wrapper -------
+@import "includes/html5bp/topwrapper";
+
+// ------- Fonts -------
+@import "includes/fonts";
+
+// basic css styling for things like Body/container
+@import "includes/basics";
+
+/* 
+  ---------------------
+    Z-INDEXES: 
+  ---------------------
+*/
+@import "z-indexes";
+/* 
+  ---------------------
+  IMPORT VIEWS and SEP .SCSS files here: 
+  ---------------------
+*/
+
+
+/* 
+  ---------------------
+  end of imports 
+  ---------------------
+*/
+
+
+/*
+  ---------------------
+  END CUSTOM CODE
+  ---------------------
+*/
+//import HTML5 bp bottom wrapper files
+@import "includes/html5bp/bottomwrapper";
+
