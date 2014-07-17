@@ -1,0 +1,15 @@
+#CUSTOM URL:
+Options +FollowSymLinks
+RewriteEngine On
+# RewriteBase /
+
+RewriteBase /
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond $1#%{REQUEST_URI} ([^#]*)#(.*)\1$
+RewriteRule ^(.*)$ %2index.html [QSA,L]
+
+RewriteCond %{REQUEST_URI} !^/assets
+RewriteCond %{REQUEST_FILENAME} !-f 
+RewriteCond %{REQUEST_FILENAME} !-d 
+RewriteCond %{REQUEST_FILENAME} !-l [OR]
+RewriteRule .* index.html [L]
