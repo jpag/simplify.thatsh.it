@@ -1,0 +1,28 @@
+.buy-cta {
+	
+	background: #333;
+	padding: 0px 0px 100px;
+
+	.arrow {
+		margin: auto;
+		background-image: url("../imgs/icons/downArrow.svg");
+		width: 20px;
+		height: 100px;
+		background-size: contain;
+		background-repeat: no-repeat;
+		background-position: 50% 50%;
+	}
+
+	.buy-product {
+		height: 300px;
+		background: RGBA(255,255,255,.95);
+		&:hover {
+			background: RGBA(255,255,255,.5);
+		}
+	}
+
+
+}
+
+@import "buy-cta.med";
+@import "buy-cta.sml";

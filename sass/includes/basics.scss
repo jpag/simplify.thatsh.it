@@ -20,7 +20,7 @@ body {
   user-select: none;
 
   @media screen and (max-width: $breakpt-med) {
-    overflow: hidden;
+    // overflow: hidden;
   }
 
 }
@@ -32,10 +32,17 @@ ul,li {
   padding: 0px;
 }
 
+.wrapper {
+  position: relative;
+  width: 100%;
+}
+
+
 .container {
   position: relative;
   width: 100%;
-  // min-width: $site-min-width;
+  max-width: $maxWidth;
+  margin: auto;
 }
 
 

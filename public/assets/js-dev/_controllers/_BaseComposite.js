@@ -35,9 +35,12 @@
     // type : null,
 
     init : function() {              
-      TweenMax.to('body',0,{
-        'opacity' : 0
-      });
+      if( this._Template != null ){
+        TweenMax.to('body',0,{
+          'opacity' : 0
+        });
+      }
+      
       this._super();
     },
 
@@ -63,8 +66,8 @@
       });
     },
 
-    resize : function(w,h) {
-      trace(' RESIZE COMPOSITE ' );
+    resize : function(e,w,h) {
+
       // dispatch and resize ALL views:
       this.$doc.trigger(Events.view.resize,[w,h]);
     }

@@ -1,0 +1,20 @@
+.lrg {
+	//display: block;
+}
+
+.lrg-med {
+	//display: block;
+}
+.med {
+	display: none;
+}
+.med-sml {
+	display: none;
+}
+.sml {
+	display: none;
+}
+
+
+@import "_med";
+@import "_sml";

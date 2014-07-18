@@ -1,5 +1,17 @@
 @media screen and (max-width: $breakpt-med) {
-.someclass{
-	
+.lrg{
+	display: none;
 }
+.lrg-med {
+	display: block;
+}
+.med {
+	display: block;
+}
+.med-sml {
+	display: block;
+}
+
+
+
 }

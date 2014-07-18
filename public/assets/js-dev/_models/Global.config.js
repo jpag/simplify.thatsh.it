@@ -16,7 +16,16 @@ define([], function() {
         lng   : 1,
         vlng  : 2,
         navOpenCollapse : 3/4
+      },
+
+
+      canvas : {
+        maxW : 800,
+        maxH : 600
       }
+
+
+
 
     }
 });

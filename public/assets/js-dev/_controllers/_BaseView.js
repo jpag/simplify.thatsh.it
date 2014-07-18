@@ -36,16 +36,17 @@
 
     renderTemplate : function() {
         // Debug.trace(' - Loading template Model ' + this.settings._Model ); 
-        if( typeof this._Template === 'undefined' ||
-            this._Template.length < 1 ){
+        if( typeof this._Template === 'undefined' ){
             trace(' NO TEMPLATE DEFINED ABORT!');
-            return;
+            // return;
         }
 
         var view = this,
-            requireArray = [
-                            'text!../templates/'+this._Template
-                            ];
+            requireArray = [];
+
+        if( typeof this._Template == 'string' ){
+          requireArray.push('text!../templates/'+this._Template);
+        }
 
         /*
          * Do we need to load a model as well?
@@ -80,20 +81,29 @@
               view._Model[key] = view._ExtraPartialModels[key];
             }
 
-            var handlebar = Handlebars.compile(Template);
-            view.$el = $( handlebar(Model) );
+            if( Template ){
+              var handlebar = Handlebars.compile(Template);
+              view.$el = $( handlebar(Model) );
+            }else{
+              // you better have $el defined
+              if( !view.$el ){
+                trace(' ERROR need an $EL defined before render if no template or model defined');
+                return;
+              }
+            }
 
             // otay... now add it somewhere:
             if( typeof view._AppendTo === 'string' ){
               $(view._AppendTo).append(view.$el);
             }else if( typeof view._PrependTo === 'string' ){
               $(view._PrependTo).prepend(view.$el);
+            }else{
+              // if null we don't want to append it.
+
             }
 
             // what for the call stack to be complete:
             setTimeout(function(){view.didInsertElement();}, 0);
-            // or do it imediately?
-            //view.didInsertElement();
         });
     },
 

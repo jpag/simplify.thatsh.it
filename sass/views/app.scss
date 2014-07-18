@@ -1,0 +1,39 @@
+.app {
+
+	height: 80%;
+
+	.cta-generate {
+		width: 50%;
+		height: 400px;
+		background: RGBA(0,0,0,.25);
+		margin: 50px auto;
+		position: relative;
+	}
+
+	padding-top: 100px;
+
+	#simplifyapp {
+		width: 100%;
+		
+		margin: auto;
+		
+	}
+
+	canvas {
+		display: block;
+		position: relative;
+		margin: auto;
+		border: 1px solid #aaa;
+		background: RGBA(10,10,10,.1);
+	}
+
+	#origin-hidden-canvas {
+		visibility: none;
+		position: absolute;
+		left: -5000px;
+	}
+
+}
+
+@import "app.med";
+@import "app.sml";

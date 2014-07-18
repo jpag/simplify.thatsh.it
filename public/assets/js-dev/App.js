@@ -22,6 +22,8 @@ requirejs.config({
         Hammer                      : '_lib/hammer.min',
         FastClick                   : '_lib/fastclick',
         Handlebars                  : '_lib/handlebars-1.0.0',
+        Modernizr                   : '_lib/modernizr',
+        Paper                       : '_lib/paper/paper-core.min',
         
         // Configurations :
         GlobalConfig                : '_models/Global.config',
@@ -35,7 +37,8 @@ requirejs.config({
         BaseComposite               : '_controllers/_BaseComposite',
         
         // Composites
-        CompositeHome               : '_controllers/composite.home'
+        AppComposite                : '_controllers/Composite.app',
+        SimplifyView                : '_controllers/View.simplifyapp'
 
         // Models
         
@@ -59,7 +62,7 @@ requirejs.config({
         },
 
         "BaseView" : {
-            deps    : ["jQuery","Hammer","FastClick","Handlebars"],
+            deps    : ["jQuery","Hammer","FastClick","Handlebars","Modernizr"],
             exports : "BaseView"
         }
     }
@@ -77,6 +80,7 @@ require([
     'BaseClass',
     'GlobalEvents', 
     'FastClick',
+    'Modernizr',
     'text'
 ], function(
     $,
@@ -84,45 +88,71 @@ require([
     Config,
     BaseClass,
     Events,
-    FastClick
+    FastClick,
+    Modernizr
 ) {
     
     var App = BaseClass.extend({
         trace : true,
         
+        //composites : [],
+
         init : function() {
 
             this._super();
             
             this.$el = $("body");
-            var url = window.location.pathname.toLowerCase(),
-                // Default page is : 
-                PAGE = 'CompositeHome',
-                self = this,
-                callback = self.loaded.bind(this),
-                data = {} ;
 
-            // ROUTER:
-            if( url.search('/blah') > -1 ){
-              PAGE = 'CompositeBlah';
-              data = {};
-            }
+            // run checks for support:
+            // trace( Modernizr );
+            // trace( Modernizr.draganddrop );
+            // if( !Modernizr.draganddrop || 
+            //     !Modernizr.svg ||
+            //     !Modernizr.canvas
+            //   ){
 
-            // create scene:
-            require([PAGE],function(_PAGE){
-              window.app.page = new _PAGE(data);
-              callback();
+            //   // TODO : add a proper fail message
+            //   alert('Your browser is missing compatibility features required to view this.')
+            //   return;
+            // }
+
+
+            require(['AppComposite'],function(_composite){
+              
+              window.app.comp = new _composite();
+              //composites.push(_view);
+
             });
 
+            // var url = window.location.pathname.toLowerCase(),
+            //     // Default page is : 
+            //     PAGE = 'CompositeHome',
+            //     self = this,
+            //     callback = self.loaded.bind(this),
+            //     data = {} ;
+
+            // // ROUTER:
+            // if( url.search('/blah') > -1 ){
+            //   PAGE = 'CompositeBlah';
+            //   data = {};
+            // }
+
+            // // create scene:
+            // require([PAGE],function(_PAGE){
+            //   window.app.page = new _PAGE(data);
+            //   callback();
+            // });
+
+            this.bindEvents();
         },
 
-        loaded : function() {
-          var self = this;
+        // loaded : function() {
+        //   var self = this;
 
-          setTimeout( function(){
-              self.windowResizeDispatcher(null) 
-            }, 0);
-        },
+        //   setTimeout( function(){
+        //       self.windowResizeDispatcher(null) 
+        //     }, 0);
+        // },
 
         bindEvents : function(){
             this._super();
