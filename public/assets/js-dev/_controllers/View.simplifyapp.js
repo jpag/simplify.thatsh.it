@@ -55,6 +55,23 @@
     redraw              : true,
     plotted: [],
 
+
+    // test switches
+    test                : false,
+    lotsofdots          : true,
+    lessdots            : false,
+
+    testimglist         : [
+        "/testimg.jpg",  // 0
+        "/testimg2.jpg", // 1
+        "/testimg3.jpg", // 2
+        "/testimg4.jpg", // 3
+        "/125901215.jpg" // 4
+    ],
+
+    testImage : 2,
+
+
     init : function() {
 
         this.$el = $("#"+this.id);
@@ -91,11 +108,9 @@
             self.drawOriginalImageToCanvas();
         }, false);
 
+
         // test insert an image:
-        //this.imgsrc.src = "/testimg.jpg";
-        //this.imgsrc.src = "/testimg2.jpg";
-        //this.imgsrc.src = "/testimg3.jpg";
-        this.imgsrc.src = "/testimg4.jpg";
+        this.imgsrc.src = this.testimglist[ this.testImage ];
 
     },
 
@@ -198,7 +213,9 @@
         var shapes = this.findGrayScaleShapes();
 
         // time to draw these shapes:
-        this.drawDefinedObjects(shapes);
+        if( !this.test && !this.lotsofdots && !this.lessdots ){
+            this.drawDefinedObjects(shapes);
+        }
 
 
         // high contrast it:
@@ -207,13 +224,20 @@
         
         // look for shapes
         //this.shapes(dat,w,h, 200, 0.5, 0.3, false, 'fullrect');
-        //this.shapes(dat,w,h, 10, 0.2, 0.15, false, 'arc');
-        //this.shapes(dat,w,h, 5, 0.3, 0.25, false, 'arc');
+        if( this.lessdots ){
+            this.shapes(dat,w,h, 10, 0.2, 0.15, false, 'arc');
+            this.shapes(dat,w,h, 5, 0.3, 0.25, false, 'arc');
+        }
         //this.shapes(dat,w,h, 200, 0.01, 0.5, false, 'rect');
         //dat = this.contrast(dat, 100);
-        //this.shapes(dat,w,h, 5, 0.01, 0.012, false, 'arc');
+
+        
         // tiny dots:
-        //this.shapes(dat,w,h, 220, 0.005, 0.005, false, 'arc');
+        if( this.lotsofdots ){
+            this.shapes(dat,w,h, 5, 0.01, 0.012, false, 'arc');
+            this.shapes(dat,w,h, 220, 0.005, 0.005, false, 'arc');
+
+        }
 
 
         //this.shapes(dat,w,h, 150, 0.33, 0.20, false, 'arc');
@@ -231,6 +255,8 @@
     // add high contrast
     // we look for the pixel chunks that stand out.
     findGrayScaleShapes : function() {
+
+        var showMapping = this.test;
         
         var w = this.availW;
         var h = this.availH;
@@ -264,10 +290,12 @@
         }
         grayScaleCanvas.ctx.putImageData(grayScaleCanvas.dat,0,0);
 
-        //this.ctx.drawImage( grayScaleCanvas.cv, 0,0, w, h);
-        
-        //grayScaleCanvas.ctx.drawImage( this.$canvas[0], 0,0, w, h);
-        //grayScaleCanvas.dat = grayScaleCanvas.ctx.getImageData(0,0,w,h);
+        if( showMapping == true ){
+            this.ctx.drawImage( grayScaleCanvas.cv, 0,0, w, h);
+
+            // grayScaleCanvas.ctx.drawImage( this.$canvas[0], 0,0, w, h);
+            // grayScaleCanvas.dat = grayScaleCanvas.ctx.getImageData(0,0,w,h);
+        }
         
         var shapes = this.findHighContrastShapes(grayScaleCanvas);
 
@@ -281,30 +309,38 @@
             shapes = this.findHighContrastShapes(grayScaleCanvas);
         }
         
+        if( showMapping == true ){
+            for( var s = 0; s < shapes.length ; s++){
+                this.drawRect(shapes[s][0]/downscale,shapes[s][1]/downscale, {r: 240, g: 155, b: 25, a: 0.95}, this.ctx, 20, 20 );
+            }
+        }    
+
         // We got all the shapes.
         // x,y values are scaled, they start at 0,0
         // nothing to do with the first index so skip.
         for( var s = 1; s < shapes.length; s++){
 
             var shape = shapes[s];
-            var x = shape[0];
-            var y = shape[1];
+            var x = shape[0] + 0;
+            var y = shape[1] + 0;
             var rangeThreshold = 1; 
+
             // number of pixels to define the square range to look
             // i.e. 1 would search the X's below from '.' point:
             //
-            //   X X X
-            //   X . X
-            //   X X X
+            //   X X _
+            //   X . _
+            //   _ _ _
             //
 
             var matrix = {
                 x : [],
                 y : []
             };
-
-            // range on each side * 2 plus the middle point.
-            for( var rx = (x-rangeThreshold); rx <= x; rx++ ){
+            
+            // create matrix array relative to THIS X,Y point
+            // +1 to include the x value in the top right (from previous row.)
+            for( var rx = (x-rangeThreshold); rx <= (x); rx++ ){
                 //trace( rx );
                 if( rx < 0 || 
                     (rx >= (tw - 1)) ){
@@ -340,7 +376,7 @@
                 for( var mx = 0; mx < matrix.x.length; mx++ ){
                     if( compared[0] == matrix.x[mx] ){
                         match[0] = true;
-                    }else if( compared.length == 4 ){
+                    }else if( compared.length >= 4 ){
                         // matrix val is >= to x and <= to width
                         if( matrix.x[mx] >= compared[0] && 
                             matrix.x[mx] <= (compared[0]+compared[2]) ){
@@ -354,7 +390,7 @@
                 for( var my = 0; my < matrix.y.length; my++ ){
                     if( compared[1] == matrix.y[my] ){
                         match[1] = true;
-                    }else if( compared.length == 4 ){
+                    }else if( compared.length >= 4 ){
                         // matrix val is >= to y and <= to height
                         if( matrix.y[my] >= compared[1] && 
                             matrix.y[my] <= (compared[1]+compared[3]) ){
@@ -366,24 +402,65 @@
                 }
 
                 if( match[0] == true && match[1] == true ){
-                    trace(' MATCH FOUND ' );
+                    
+                    var cx = shapes[si][0] + 0;
+                    var cy = shapes[si][1] + 0;
+                    
                     // expand the shape size:
                     // cut out of the shape list, and expand the existing one:
 
                     // shift the current SHAPE so x,y will become this compared coord.
                     // and the end point will be the current x,y of it.
 
-                    // take current x,y compare that to the previous x,y match find difference and + 1
-                    var nw = x - shapes[si][0] + 1;
-                    var nh = y - shapes[si][1] + 1;
+                    var nw = Math.abs(x - cx + 1);
+                    var nh = Math.abs(y - cy + 1);
 
-                    shapes[s] = [shapes[si][0], shapes[si][1], nw, nh ];
+                    // because we are looking at previous values only
+                    // always assign x,y to the lowest value
+                    if( shapes[s][0] < cx ){
+                        cx = shapes[s][0];
+                        
+                        // x is already further. so leave it there and leave the width:
+                        if( shapes[s].length >= 4 ){
+                            nw = shapes[s][2] + 1;
+                        }
+                    }
+
+                    if( shapes[s][1] < cy ){
+                        cy = shapes[s][1];
+
+                        if( shapes[s].length >= 4 ){
+                            nh = shapes[s][3] + 1;
+                        }
+                    }
+
+                    var id = s;
+                    if( shapes[si].length == 5 ) {
+                        // we are removing an item that already has an id keep 
+                        // so we keep track of it's growth before removal/nullify
+                        id = shapes[si][4];
+                    }
+                    
+                    if( id == 5 ){
+                        
+                        trace(id + ' ' + s + ' Match: shape x,y = ' + x + ','+y+' new x:' + cx +','+cy  );
+                        trace(' --- dimensions ' + nw + ','+nh+'\n\n');
+                    
+                    }
+
+                    shapes[s] = [cx, cy, nw, nh, id];
+                    if( id == 5 ){
+                        trace( shapes[s] );
+                    }
+                    
                     // we need the length to maintain but clear out that val:
                     shapes[si] = null;
+
+
                 }
             }// end of looping matrix to previous shapes.
-
         }
+
 
         // clean up shapes:
         trace(' original shapes : ' + shapes.length);
@@ -400,9 +477,9 @@
         // order shapes by size (remove after 5);
         // numerically and descending
         shapes.sort(function(a, b){
-            if( a.length == 4 && b.length == 4 ){
+            if( a.length >= 4 && b.length >= 4 ){
                 return (b[2]*b[3]) - (a[2]*a[3]);
-            }else if( a.length == 4 ){
+            }else if( a.length >= 4 ){
                 // only a 
                 return -1;
             }else{
@@ -410,7 +487,6 @@
                 return 0;
             }
         });
-
         shapes.reverse();
 
         var shapesreturn = [];
@@ -421,12 +497,16 @@
             var sy = shapes[s][1] / downscale;
             var sw = 20;
             var sh = 20;
-            if( shapes[s].length == 4 ){
+            if( shapes[s].length >= 4 ){
                 sw = shapes[s][2] / downscale;
                 sh = shapes[s][3] / downscale;
             }
             //trace( sx + ','+ sy + ' w:'+ sw +' h:'+sh );
-            //this.drawRect(sx,sy, {r: 40, g: 155, b: 225, a: 0.95}, this.ctx, sw, sh );
+            
+            if( showMapping == true ){
+                this.drawRect(sx,sy, {r: 240, g: 155, b: 225, a: 0.75}, this.ctx, sw, sh );
+            }
+
             shapesreturn.push({x: sx, y: sy, w: sw, h: sh});
         }
 
@@ -460,9 +540,6 @@
             }
 
             if( pixel.r < grayThreshold ){
-                // found a pixel shape:
-                //trace( ' x , y ' + x + ' ,' + y );
-                //this.drawRect(sx,sy, {r: 240, g: 155, b: 25, a: 0.95}, this.ctx, 20, 20 );
                 shapes.push([x,y]);
             }
         }
@@ -510,9 +587,9 @@
                 longestIndex = r;
             }
             if( colors[r].length == 0 ){
-                trace( '   - color array has no length ' + r );
+                // trace( '   - color array has no length ' + r );
             }else{
-                trace( '   - color array ' + r + ' color: r' + colors[r][0].r + ' g'+ colors[r][0].g + ' b'+ colors[r][0].b + ' length of '+ colors[r].length )
+                // trace( '   - color array ' + r + ' color: r' + colors[r][0].r + ' g'+ colors[r][0].g + ' b'+ colors[r][0].b + ' length of '+ colors[r].length )
             }
         }
 
@@ -629,9 +706,9 @@
                 }
 
                 if( colorChannel[r].length == 0 ){
-                    trace( '   - color array has no length ' + r );
+                    // trace( '   - color array has no length ' + r );
                 }else{
-                    trace( '   - color array ' + r + ' color: r' + colorChannel[r][0].r + ' g'+ colorChannel[r][0].g + ' b'+ colorChannel[r][0].b + ' length of '+ colorChannel[r].length )
+                    // trace( '   - color array ' + r + ' color: r' + colorChannel[r][0].r + ' g'+ colorChannel[r][0].g + ' b'+ colorChannel[r][0].b + ' length of '+ colorChannel[r].length )
                 }
             }
         }
