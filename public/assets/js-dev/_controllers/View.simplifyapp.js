@@ -57,20 +57,45 @@
 
 
     // test switches
-    test                : false,
-    lotsofdots          : true,
-    lessdots            : false,
+    devswitches         : {
+                            // show object deteciton mapping:
+                            showMapping         : false,
+                            // do the object detection logic.
+                            objectDetect        : true,
+                            lotsofdots          : false,
+                            lessdots            : false
+                        },
+
 
     testimglist         : [
-        "/testimg.jpg",  // 0
-        "/testimg2.jpg", // 1
-        "/testimg3.jpg", // 2
-        "/testimg4.jpg", // 3
-        "/125901215.jpg" // 4
+        // 0
+        "/testimg.jpg",  
+        // 1
+        "/testimg2.jpg", 
+        // 2
+        "/testimg3.jpg", 
+        // 3
+        "/testimg4.jpg", 
+        // 4
+        "/125901215.jpg", 
+        // 5
+        "/87467861.jpg", 
+        // 6
+        "/72004170.jpg", 
+        // 7
+        "/145597609.jpg", 
+        // 8
+        "/155758005.jpg", 
+        // 9
+        "/87890171.jpg",
+        // 10
+        "/99550181.jpg",
+        // 11
+        "/177253430.jpg",
+        // 12
+        "/187022883.jpg"
     ],
-
-    testImage : 2,
-
+    testImage : 6,
 
     init : function() {
 
@@ -95,7 +120,7 @@
             "drop" : this.handleDrop.bind(this),
             "dragover" : this.handleDragOver.bind(this),
             "click" : function(){
-                self.drawOriginalImageToCanvas();
+                self.drawNextImage();
             }
         });
 
@@ -142,6 +167,15 @@
             // trace( event.target.result );
         };
         reader.readAsDataURL(file);        
+    },
+
+    // test
+    drawNextImage : function() {
+        this.testImage++;
+        if( this.testImage >= this.testimglist.length ){
+            this.testImage = 0;
+        }
+        this.imgsrc.src = this.testimglist[ this.testImage ];
     },
 
     drawOriginalImageToCanvas : function() {
@@ -205,16 +239,22 @@
         
 
         //dat = this.contrast(dat, 10);
-        //this.drawAvgColor(dat,this.ctx,10);
-        
-        this.drawAvgFromDictChannels(dat,this.ctx, 15);
+        this.drawAvgColor(dat,this.ctx);
+        // this.drawAvgFromDictChannels(dat,this.ctx, 15);
+        // this.drawAvgFromScaleDown(dat,this.ctx);
         
         // find those unique colors that stand out from the background color average :
         var shapes = this.findGrayScaleShapes();
 
+        if( this.devswitches.drawHorizon == true ){
+            // almost all images have a horizon find one...?
+
+        }
+
         // time to draw these shapes:
-        if( !this.test && !this.lotsofdots && !this.lessdots ){
+        if( this.devswitches.objectDetect == true ){
             this.drawDefinedObjects(shapes);
+
         }
 
 
@@ -224,7 +264,7 @@
         
         // look for shapes
         //this.shapes(dat,w,h, 200, 0.5, 0.3, false, 'fullrect');
-        if( this.lessdots ){
+        if( this.devswitches.lessdots ){
             this.shapes(dat,w,h, 10, 0.2, 0.15, false, 'arc');
             this.shapes(dat,w,h, 5, 0.3, 0.25, false, 'arc');
         }
@@ -233,10 +273,9 @@
 
         
         // tiny dots:
-        if( this.lotsofdots ){
+        if( this.devswitches.lotsofdots ){
             this.shapes(dat,w,h, 5, 0.01, 0.012, false, 'arc');
             this.shapes(dat,w,h, 220, 0.005, 0.005, false, 'arc');
-
         }
 
 
@@ -244,7 +283,7 @@
 
 
         // draw the shapes:
-        trace(' draw shapes ' + this.plotted.length );
+        trace(' drawn shapes ' + this.plotted.length );
         // the shapes drawn: this.plotted.
         // find the edges of the shapes to draw objects. and find the average color in them.
 
@@ -256,18 +295,22 @@
     // we look for the pixel chunks that stand out.
     findGrayScaleShapes : function() {
 
-        var showMapping = this.test;
+        var showMapping = this.devswitches.showMapping;
         
         var w = this.availW;
         var h = this.availH;
 
         // do a shrink and high contrast to find the key shapes:
+
         var grayScaleCanvas = {cv : null };
         var downscale = .04;
         var tw = Math.ceil(w * downscale);
         var th = Math.ceil(h * downscale);
         var contrastLevel = 255/2;
         var hiddencanvas = this.$el.find("#origin-hidden-canvas")[0];
+
+        var maxAreaPerShape =  Math.floor( (tw * 0.1) * (th * 0.1) );
+
 
         grayScaleCanvas.cv = document.createElement('canvas');
         grayScaleCanvas.cv.width = tw;
@@ -311,7 +354,7 @@
         
         if( showMapping == true ){
             for( var s = 0; s < shapes.length ; s++){
-                this.drawRect(shapes[s][0]/downscale,shapes[s][1]/downscale, {r: 240, g: 155, b: 25, a: 0.95}, this.ctx, 20, 20 );
+                this.drawRect(shapes[s][0]/downscale,shapes[s][1]/downscale, {r: 222, g: 250, b: 5, a: 0.75}, this.ctx, 20, 20 );
             }
         }    
 
@@ -321,6 +364,9 @@
         for( var s = 1; s < shapes.length; s++){
 
             var shape = shapes[s];
+            // should never happen:
+            if( shape == null ){ continue; }
+
             var x = shape[0] + 0;
             var y = shape[1] + 0;
             var rangeThreshold = 1; 
@@ -351,7 +397,7 @@
                 matrix.x.push(rx);
             }
 
-            for( var ry = ( y - rangeThreshold ); ry <= y; ry++ ){
+            for( var ry = ( y-rangeThreshold ); ry <= y; ry++ ){
                 if( ry < 0 || 
                     (ry >= (th - 1)) ){
                     // reached the edge
@@ -361,16 +407,19 @@
                 matrix.y.push(ry);
             }
             
-            // now compare every single shape to see if there is a match 
+            // include upper right hand corner:
+
+
+            // now compare every single shape previously to see if there is a match 
             // at those 8 surrounding points:
             // only do upto the current shape we are checking
             // start at the shape, and go progressively further away (left and top)
+            //trace( '\n\n ----- loop previous  ' + (s-1) );
             for( var si = (s-1); si >= 0; si-- ){
                 // increment backwards starting at (currentshape - 1)
                 var compared = shapes[si];
+                if( compared === null ){ continue; }
                 
-                if( compared == null ){ continue; }
-
                 // has to match both x,y:
                 var match = [false,false];
                 for( var mx = 0; mx < matrix.x.length; mx++ ){
@@ -378,6 +427,7 @@
                         match[0] = true;
                     }else if( compared.length >= 4 ){
                         // matrix val is >= to x and <= to width
+
                         if( matrix.x[mx] >= compared[0] && 
                             matrix.x[mx] <= (compared[0]+compared[2]) ){
                             // trace(' found x match between x and w');
@@ -403,67 +453,67 @@
 
                 if( match[0] == true && match[1] == true ){
                     
-                    var cx = shapes[si][0] + 0;
-                    var cy = shapes[si][1] + 0;
-                    
-                    // expand the shape size:
-                    // cut out of the shape list, and expand the existing one:
+                    trace(' match between the two');
+                    var cx = compared[0] + 0;
+                    var cy = compared[1] + 0;
+                    var cw = 1;
+                    var ch = 1;
+                    var id = s + 0;
 
-                    // shift the current SHAPE so x,y will become this compared coord.
-                    // and the end point will be the current x,y of it.
-
-                    var nw = Math.abs(x - cx + 1);
-                    var nh = Math.abs(y - cy + 1);
-
-                    // because we are looking at previous values only
-                    // always assign x,y to the lowest value
-                    if( shapes[s][0] < cx ){
-                        cx = shapes[s][0];
-                        
-                        // x is already further. so leave it there and leave the width:
-                        if( shapes[s].length >= 4 ){
-                            nw = shapes[s][2] + 1;
-                        }
+                    if( compared.length >= 4 ){
+                        // unique width/height
+                        cw = compared[2] + 0;
+                        ch = compared[3] + 0;
+                        id = compared[4] + 0;
                     }
 
-                    if( shapes[s][1] < cy ){
-                        cy = shapes[s][1];
-
-                        if( shapes[s].length >= 4 ){
-                            nh = shapes[s][3] + 1;
-                        }
+                    if( shapes[s][2] * shapes[s][3] > maxAreaPerShape ){
+                        continue;
                     }
 
-                    var id = s;
-                    if( shapes[si].length == 5 ) {
-                        // we are removing an item that already has an id keep 
-                        // so we keep track of it's growth before removal/nullify
-                        id = shapes[si][4];
-                    }
-                    
-                    if( id == 5 ){
-                        
-                        trace(id + ' ' + s + ' Match: shape x,y = ' + x + ','+y+' new x:' + cx +','+cy  );
-                        trace(' --- dimensions ' + nw + ','+nh+'\n\n');
-                    
+                    // define width, if no width is defined before adding to it.
+                    if( shapes[s].length < 4 ){
+                        shapes[s][2] = cw;
+                        shapes[s][3] = cw;
                     }
 
-                    shapes[s] = [cx, cy, nw, nh, id];
-                    if( id == 5 ){
-                        trace( shapes[s] );
+                    if( cx < x ){
+                        // cx is less. so there is something to be added here:
+                        shapes[s][0] = cx;
+                        // calculate the offset between cx and x.
+                        var difx = x - cx + 1;
+                        shapes[s][2] = difx;
                     }
-                    
-                    // we need the length to maintain but clear out that val:
+
+                    if( cy < y ){
+                        // cy less y so there is something to be added here:
+                        shapes[s][1] = cy;
+                        // cal the offset between y and cy.
+                        var dify = y - cy + 1;
+                        shapes[s][3] = dify;
+                    }
+
+                    shapes[s][4] = id;
+                    // regardless of what we did; dump the shape previous now:
                     shapes[si] = null;
 
+                    if( id == 7 ){
+                        trace('id: ' + id + ' at s index: ' + s + ' Match: shape x,y = ' + x + ','+y  );
+                        trace( '   si ' + si + ' - ' + cx +','+cy );
+                        trace( $.extend([], shapes[s]) );
+                        trace(" \n\n" );
+                    }
 
                 }
             }// end of looping matrix to previous shapes.
-        }
+
+        }// end of looping shapes.length
 
 
         // clean up shapes:
+        // trace( shapes );
         trace(' original shapes : ' + shapes.length);
+
         for( var s = shapes.length-1; s >= 0; s-- ){
             if( shapes[s] == null ){
                 shapes.splice(s,1);
@@ -473,82 +523,109 @@
         }
 
         trace(' shapes cleaned : ' + shapes.length);
-        trace( shapes );
         // order shapes by size (remove after 5);
-        // numerically and descending
+        // numerically put biggest first in the index.
         shapes.sort(function(a, b){
             if( a.length >= 4 && b.length >= 4 ){
+                trace(' sorting has length match ' );
                 return (b[2]*b[3]) - (a[2]*a[3]);
-            }else if( a.length >= 4 ){
-                // only a 
+            }else if( a.length >= 4 && b.length < 4 ){
                 return -1;
-            }else{
-                // both meh..?
+            }else if( b.length >= 4 && a.length < 4 ){
+                return 1;
+            }else{ 
+                // both meh
                 return 0;
             }
         });
-        shapes.reverse();
-
+        
         var shapesreturn = [];
         var shapesToReturn = shapes.length; //(shapes.length < 6)? shapes.length : 6;
-
+        // we need at least three shapes that have defined w/h to exclude just the points collected.
+        var numOfShapesWithWidth = 0;
+        var minDefinedShapesNeeded = 3;
+        var skipshapeswithNoWidth = false;
+        for( var s = 0; s< shapes.length; s++){
+            if( shapes[s].length >= 4 && numOfShapesWithWidth >= minDefinedShapesNeeded){
+                skipshapeswithNoWidth = true;
+                numOfShapesWithWidth++;
+                break;
+            }
+        }
+        
+        var maxSurfaceArea = ( this.availW * this.availH ) * .8;
         for( var s = 0; s < shapesToReturn; s++ ){
             var sx = shapes[s][0] / downscale;
             var sy = shapes[s][1] / downscale;
             var sw = 20;
             var sh = 20;
+            var id = "NA";
+
             if( shapes[s].length >= 4 ){
                 sw = shapes[s][2] / downscale;
                 sh = shapes[s][3] / downscale;
-            }
-            //trace( sx + ','+ sy + ' w:'+ sw +' h:'+sh );
-            
-            if( showMapping == true ){
-                this.drawRect(sx,sy, {r: 240, g: 155, b: 225, a: 0.75}, this.ctx, sw, sh );
-            }
+                id = shapes[s][4];
+            } else if( skipshapeswithNoWidth == true) {
+                // no width/or height skip it:
+                // let us make sure these aren't the only shapes...
 
-            shapesreturn.push({x: sx, y: sy, w: sw, h: sh});
-        }
-
-        return shapesreturn;
-    },
-
-    findHighContrastShapes : function(grayScaleCanvas) {
-         // everything is pixelated. so just look for rectangles, 
-        // we can determine to draw recs or circles later.
-        var w = this.availW;
-        var h = this.availH;
-
-        var grayThreshold = 100;
-        var px,x,y,sx,sy,pixel;
-        var gsd = grayScaleCanvas.dat
-        var shapes = [];
-        
-        for( var i = 0; i < gsd.data.length; i+=4){
-            // loop time!
-            px = i/4
-
-            y = Math.floor(px / gsd.width)
-            x = px % gsd.width
-            // scaled x,y
-            sy = y / (gsd.width/w);
-            sx = x / (gsd.width/w);
-            
-            var pixel = {r: gsd.data[i], g: gsd.data[i+1], b: gsd.data[i+2] , a: gsd.data[i+3] };
-            if( pixel.a != 255 ){
                 continue;
             }
 
-            if( pixel.r < grayThreshold ){
-                shapes.push([x,y]);
+            trace(' id ' + id + ' - '+ sx + ','+ sy + ' w:'+ sw +' h:'+sh );
+            trace(shapes[s]);
+            
+            if( showMapping == true ){
+
+                this.drawRect(sx,sy, {
+                                    r: 250, 
+                                    g: 240, 
+                                    b: 255, 
+                                    a: 0.5
+                                    }, 
+                                    this.ctx, sw, sh );
             }
+
+            if( sw * sh >= maxSurfaceArea ){
+                // skip it too big.
+                continue;
+            }
+            shapesreturn.push({x: sx, y: sy, w: sw, h: sh});
         }
-        return shapes;
+        // trace( " - shapesToReturn " + shapesreturn.length );
+        return shapesreturn;
     },
 
     drawRect : function(x,y,c,ctx,sizew, sizeh) {
         ctx.fillStyle="RGBA("+c.r+","+c.g+","+c.b+","+c.a+")";
         ctx.fillRect(x,y,sizew,sizeh);
+    },
+
+    drawAvgFromScaleDown : function(dat,ctx){
+        var shrinkCan = {}
+        var tw = 1; //this.availW * 0.01;
+        var th = 1; //this.availH * 0.01;
+        var hiddencanvas = this.$el.find("#origin-hidden-canvas")[0];
+        shrinkCan.cv = document.createElement('canvas');
+        shrinkCan.cv.width = tw;
+        shrinkCan.cv.height = th;
+        shrinkCan.ctx = shrinkCan.cv.getContext('2d');
+        
+        shrinkCan.ctx.drawImage(hiddencanvas, 0, 0, tw, th);
+        //shrinkCan.ctx.putImageData(hiddencanvas,0,0);
+        shrinkCan.dat = shrinkCan.ctx.getImageData(0,0,tw,th);
+
+        trace( shrinkCan.dat );
+        // take a middle point?
+        var red = shrinkCan.dat.data[0];
+        var green = shrinkCan.dat.data[1];
+        var blue = shrinkCan.dat.data[1];
+        var alpha = 1;
+
+        ctx.fillStyle= "RGBA("+red+","+green+","+blue+","+alpha+")";
+        ctx.fillRect(0,0,this.availW,this.availH);
+
+        this.colorAvg = {r: red, g: green, b: blue, a: alpha};
     },
 
     // pulls an avg color based off of most popular color range out of grps
@@ -638,8 +715,8 @@
         ctx.fillRect(0,0,this.availW,this.availH);
     },
 
-    // pulls an avg color based off of most popular color range 
-    // in a SPECIFIC RGB channel out of grps
+    // pulls an avg color based off of 
+    // longest/biggest group in one of the RGB color ranges
     drawAvgFromDictChannels : function(dat,ctx,grps) {
         
         trace(' ----- DRAW AVG from d channels -----');
@@ -659,8 +736,7 @@
         //created an empty array of colors:
         var colors = [colorsRed, colorsGreen, colorsBlue ]
         
-        trace( colors );
-
+        // collect the color into groups for each channel
         for( var i = 0; i < dat.data.length; i+=4) {
 
             var obj = {r: dat.data[i], g: dat.data[i+1], b: dat.data[i+2] };
@@ -679,22 +755,16 @@
                         ];
 
             for( var ci = 0; ci < colors.length; ci++){
-
-                // if( indexes[ci] >= colors[ci].length ){
-                //     indexes[ci] = colors[ci].length - 1;
-                // }
-
-                // trace(' num of groups in color: ' + colors[ci].length );
-                // trace( ci );
-                // trace( indexes[ ci ] );
-
                 colors[ci][ indexes[ci] ].push( obj );
             }
         }
 
+        trace( colors );
+
         var longest = [];
         var longestChannel = 0;
         var longestIndex = 0;
+
         for( var ch = 0; ch < colors.length; ch++ ){
             var colorChannel = colors[ch];
 
@@ -703,12 +773,6 @@
                     longest = colorChannel[r];
                     longestIndex = r;
                     longestChannel = ch;
-                }
-
-                if( colorChannel[r].length == 0 ){
-                    // trace( '   - color array has no length ' + r );
-                }else{
-                    // trace( '   - color array ' + r + ' color: r' + colorChannel[r][0].r + ' g'+ colorChannel[r][0].g + ' b'+ colorChannel[r][0].b + ' length of '+ colorChannel[r].length )
                 }
             }
         }
@@ -738,13 +802,14 @@
         }
 
         trace( idealDif );
+        // try to find if there is a color closer to the ideal dif
         var rollingDif = rangeInGroup;
         for( var l = 0; l < longest.length; l++){
             var col = longest[l];
             var tot = col.red + col.green + col.blue;
 
             var dif = Math.abs( idealDif - tot);
-            if( dif < rollingDif ){
+            if( dif <= rollingDif ){
                 rollingDif = dif;
                 red = col.red;
                 green = col.green;
@@ -757,7 +822,6 @@
         trace( "RGBA("+red+","+green+","+blue+","+alpha+")" );
         ctx.fillStyle= "RGBA("+red+","+green+","+blue+","+alpha+")";
         ctx.fillRect(0,0,this.availW,this.availH);
-
 
         this.colorAvg = {r: red, g: green, b: blue, a: alpha};
         trace("\n\n");
@@ -827,21 +891,87 @@
 
     drawDefinedObjects : function(shapes) {
         for( var s =0; s < shapes.length; s++ ){
+
             var shape = shapes[s];
             var x = shape.x;
             var y = shape.y;
-            var r = (shape.w > shape.h)? shape.w : shape.h;
-            var colorData = this.getPixelRGB( x + r/2, y + r/2, this.hiddenctx );
+            var r = ( (shape.w > shape.h)? shape.w : shape.h )/2;
             var alpha = 1;
+            var type = 'arc';//( Math.random() < 0.5 )? 'arc' : 'rect';
+            var maxPercent = 0.4;
 
-            this.ctx.arc(x, y, r, 0, 2 * Math.PI, false);
+            if( r > (this.availW * maxPercent) || r > (this.availH * maxPercent) ){
+                type = 'rect';
+            } 
+            var edgePadding = 20;
+            //color pick x,y
+            var cpx,cpy;
+            // determine if this is an arc or rectangle, 
+            // then make sure it is in bounds.
+            if( type == 'arc' ){
+                // if we do the x by radius we risk loosing the actual defined shape
+                // and color pick outside of the range.
+                x +=  shape.w / 2;
+                y +=  shape.h / 2;
+                // define point BEFORE we reposition because of the edge:
+                cpx = x;
+                cpy = y;
+
+                if( x+r+edgePadding >= this.availW ){
+                    x = this.availW - (r + edgePadding);
+                }else if( x - r <= edgePadding ) {
+                    x = r + edgePadding;
+                }
+
+                if( y+r+edgePadding >= this.availH ){
+                    y = this.availH - (r + edgePadding);
+                }else if( y - r <= edgePadding ){
+                    y = r + edgePadding;
+                }
+
+                
+
+            }else{
+                // define point BEFORE we reposition because of the edge:
+                cpx = x + shape.w/2;
+                cpy = y + shape.h/2;
+
+                if( x+shape.w+edgePadding >= this.availW ){
+                    x = this.availW - (shape.w + edgePadding);
+                }else if( x <= edgePadding ){
+                    x = edgePadding;
+                }
+
+                if( y+shape.h+edgePadding >= this.availH ){
+                    y = this.availH - (shape.h + edgePadding);
+                }else if( y <= edgePadding ){
+                    y = edgePadding;
+                }
+
+            }
+
+            if( this.devswitches.showMapping == true){
+                alpha = 0.55;
+            }
+
+
+            var colorData = this.getPixelRGB( cpx, cpy, this.hiddenctx , true);
+            
+            trace( colorData );
+            trace( x +','+y+ ' ' +shape.w +','+shape.h)
+            
             this.ctx.fillStyle = 'RGBA('+colorData.r+','+colorData.g+','+colorData.b+','+alpha+')';
-            this.ctx.fill();
+
+            if( type == 'rect' ){
+                this.ctx.fillRect(x,y,shape.w,shape.h);
+            }else{
+                this.ctx.arc(x, y, r, 0, 2 * Math.PI, false);    
+                this.ctx.fill();
+            }
             // resets path info.
             this.ctx.beginPath();
 
-
-            this.plotted.push({x:x,y:y, rgb: colorData, a: alpha});
+            this.plotted.push({x:x,y:y, rgb: colorData, a: alpha, type: type});
         }
 
     },
@@ -938,6 +1068,39 @@
                 }
             }
         }
+    },
+
+    findHighContrastShapes : function(grayScaleCanvas) {
+         // everything is pixelated. so just look for rectangles, 
+        // we can determine to draw recs or circles later.
+        var w = this.availW;
+        var h = this.availH;
+
+        var grayThreshold = 100;
+        var px,x,y,sx,sy,pixel;
+        var gsd = grayScaleCanvas.dat
+        var shapes = [];
+        
+        for( var i = 0; i < gsd.data.length; i+=4){
+            // loop time!
+            px = i/4
+
+            y = Math.floor(px / gsd.width)
+            x = px % gsd.width
+            // scaled x,y
+            sy = y / (gsd.width/w);
+            sx = x / (gsd.width/w);
+            
+            var pixel = {r: gsd.data[i], g: gsd.data[i+1], b: gsd.data[i+2] , a: gsd.data[i+3] };
+            if( pixel.a != 255 ){
+                continue;
+            }
+
+            if( pixel.r < grayThreshold ){
+                shapes.push([x,y]);
+            }
+        }
+        return shapes;
     },
 
     comparepx   : function(px,px2, threshold){
