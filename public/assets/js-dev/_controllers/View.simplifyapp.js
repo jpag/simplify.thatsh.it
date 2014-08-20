@@ -22,7 +22,10 @@
     Events,
     Hammer
   ){
-    
+
+    window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
+                              window.webkitRequestAnimationFrame || window.oRequestAnimationFrame;
+
   return BaseView.extend({
     _Name       : "Simplify app logic",   
     _Model      : {
@@ -63,7 +66,8 @@
                             // do the object detection logic.
                             objectDetect        : true,
                             lotsofdots          : false,
-                            lessdots            : false
+                            lessdots            : false,
+                            animate             : true
                         },
 
 
@@ -96,6 +100,8 @@
         "/187022883.jpg"
     ],
     testImage : 6,
+
+    bkgdalpha : 0,
 
     init : function() {
 
@@ -237,6 +243,8 @@
         var dat = this.hiddenctx.getImageData(0,0,w,h);
         trace(dat.width + ' ' + dat.height + ' ' + dat.data.length);
         
+        //empty it!
+        this.plotted = [];
 
         //dat = this.contrast(dat, 10);
         this.drawAvgColor(dat,this.ctx);
@@ -254,9 +262,7 @@
         // time to draw these shapes:
         if( this.devswitches.objectDetect == true ){
             this.drawDefinedObjects(shapes);
-
         }
-
 
         // high contrast it:
         //dat = this.contrast(dat, 10);
@@ -278,12 +284,10 @@
             this.shapes(dat,w,h, 220, 0.005, 0.005, false, 'arc');
         }
 
-
         //this.shapes(dat,w,h, 150, 0.33, 0.20, false, 'arc');
 
-
         // draw the shapes:
-        trace(' drawn shapes ' + this.plotted.length );
+        trace(' shapes ' + this.plotted.length );
         // the shapes drawn: this.plotted.
         // find the edges of the shapes to draw objects. and find the average color in them.
 
@@ -874,6 +878,8 @@
         trace( "RGBA("+red+","+green+","+blue+","+alpha+")" );
         ctx.fillStyle="RGBA("+red+","+green+","+blue+","+alpha+")";
         ctx.fillRect(0,0,this.availW,this.availH);
+
+        this.colorAvg = {r: red, g: green, b: blue, a: alpha};
     },
 
     contrast : function(dat, contrast){
@@ -890,6 +896,8 @@
     },
 
     drawDefinedObjects : function(shapes) {
+        this.plotted = [];
+
         for( var s =0; s < shapes.length; s++ ){
 
             var shape = shapes[s];
@@ -928,9 +936,6 @@
                 }else if( y - r <= edgePadding ){
                     y = r + edgePadding;
                 }
-
-                
-
             }else{
                 // define point BEFORE we reposition because of the edge:
                 cpx = x + shape.w/2;
@@ -947,33 +952,119 @@
                 }else if( y <= edgePadding ){
                     y = edgePadding;
                 }
-
             }
 
             if( this.devswitches.showMapping == true){
                 alpha = 0.55;
+                test = true;
+            }else{
+                test = false;
             }
+            var colorData = this.getPixelRGB( cpx, cpy, this.hiddenctx , test);
+            var cur, dest;
 
-
-            var colorData = this.getPixelRGB( cpx, cpy, this.hiddenctx , true);
-            
             trace( colorData );
             trace( x +','+y+ ' ' +shape.w +','+shape.h)
-            
-            this.ctx.fillStyle = 'RGBA('+colorData.r+','+colorData.g+','+colorData.b+','+alpha+')';
-
-            if( type == 'rect' ){
-                this.ctx.fillRect(x,y,shape.w,shape.h);
+            if( this.devswitches.animate == false ){
+                this.ctx.fillStyle = 'RGBA('+colorData.r+','+colorData.g+','+colorData.b+','+alpha+')';
+                if( type == 'rect' ){
+                    this.ctx.fillRect(x,y,shape.w,shape.h);
+                    cur = dest = [shape.w,shape.h];
+                }else{
+                    this.ctx.arc(x, y, r, 0, 2 * Math.PI, false);    
+                    this.ctx.fill();
+                    cur = dest = [r,r];
+                }
+                // resets path info.
+                this.ctx.beginPath();
             }else{
-                this.ctx.arc(x, y, r, 0, 2 * Math.PI, false);    
-                this.ctx.fill();
+                if( type == 'rect' ){
+                    dest = [shape.w,shape.h];
+                    cur = [0,0];
+                }else{
+                    cur = [0,0];
+                    dest = [r,r];
+                }
             }
-            // resets path info.
-            this.ctx.beginPath();
 
-            this.plotted.push({x:x,y:y, rgb: colorData, a: alpha, type: type});
+            var increment = Math.random() * 0.15;
+
+            this.plotted.push({x:x,y:y, rgb: colorData, a: alpha, type: type, current:cur, destination:dest, increment: increment });
         }
 
+        if( this.devswitches.animate == true ){
+            trace( " --- num of plotted " + this.plotted.length );
+            this.ctx.clearRect(0,0,this.availW, this.availH);
+            this.bkgdalpha = 0;
+            this.animationCycle();
+        }
+    },
+
+    animationCycle : function() {
+        //var incremental = 0.1;
+        var numCompleted = 0;
+        var snapRange = 0.5;
+
+
+        this.bkgdalpha = this.bkgdalpha + (Math.abs(this.bkgdalpha - 1) * 0.01);
+        if( this.bkgdalpha >= 0.99 ) {
+            this.bkgdalpha = 1;
+            numCompleted += 1;
+        }
+        
+        this.ctx.clearRect(0,0,this.availW, this.availH);
+        this.ctx.fillStyle="RGBA("+this.colorAvg.r+","+this.colorAvg.g+","+this.colorAvg.b+","+this.bkgdalpha+")";
+        this.ctx.fillRect(0,0,this.availW,this.availH);
+        
+        
+        for( var p = 0; p < this.plotted.length; p++){
+            var shape = this.plotted[p];
+            var x = shape.x;
+            var y = shape.y;
+            var incremental = shape.increment;
+            this.ctx.fillStyle = 'RGBA('+shape.rgb.r+','+shape.rgb.g+','+shape.rgb.b+',0.75)';
+            
+            if( shape.type == 'rect' ){
+                var newW = shape.current[0] + Math.abs((shape.current[0] - shape.destination[0]) * incremental);
+                var newH = shape.current[1] + Math.abs((shape.current[1] - shape.destination[1]) * incremental);
+
+                if( newH >= (shape.destination[1] - snapRange) ){
+                    newH = shape.destination[1];
+                    numCompleted += 0.5;
+                }
+
+                if( newW >= (shape.destination[0] - snapRange) ){
+                    newW = shape.current[0];
+                    numCompleted += 0.5;
+                }
+                
+                x = shape.x + (shape.destination[0] - newW)/2
+                y = shape.y + (shape.destination[1] - newH)/2
+
+                shape.current[0] = newW;
+                shape.current[1] = newH;
+                this.ctx.fillRect(x, y, newW, newH);
+
+            }else{
+
+                var newR = shape.current[0] + Math.abs((shape.current[0] - shape.destination[0]) * incremental);
+                if( newR >= (shape.destination[1] - snapRange) ){
+                    newR = shape.destination[1];
+                    numCompleted += 1;
+                }
+                shape.current[0] = newR;
+                this.ctx.arc(x, y, newR, 0, 2 * Math.PI, false);
+                this.ctx.fill();
+            }
+            this.ctx.beginPath();    
+        }
+
+        if( numCompleted == (this.plotted.length+1) ){
+            trace(' num Completed has maxed');
+            return;
+        }
+
+        window.requestAnimationFrame(this.animationCycle.bind(this));
     },
 
     shapes : function(dat,w,h, threshold, incremental, radius, alpharan, shapetype) {
@@ -1393,7 +1484,6 @@
 
     clearCanvas : function() {
         trace(' ---- clear canvas - ');
-
         this.ctx.clearRect(0,0,this.availW, this.availH);
         this.hiddenctx.clearRect(0,0,this.availW,this.availH);
     },
@@ -1438,6 +1528,10 @@
         this.availH = h;
         this.availW = w;
 
+        this.$el.css({
+            "width" : w,
+            "height" : h
+        });
 
         // just resize all canvas:
         this.$el.find("canvas")

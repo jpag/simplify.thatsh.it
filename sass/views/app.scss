@@ -14,17 +14,19 @@
 
 	#simplifyapp {
 		width: 100%;
-		
+		position: relative;
 		margin: auto;
 		
 	}
 
 	canvas {
 		display: block;
-		position: relative;
+		position: absolute;
+		top: 0px;
+		left: 0px;
 		margin: auto;
 		border: 1px solid #aaa;
-		background: RGBA(10,10,10,.1);
+		background: RGBA(255,255,255,0);
 	}
 
 	#origin-hidden-canvas {
