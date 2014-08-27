@@ -19,7 +19,7 @@
 
 // basic css styling for things like Body/container
 @import "includes/basics";
-@import "includes/jgrid";
+// @import "includes/jgrid";
 
 /* 
   ---------------------
@@ -32,12 +32,11 @@
   IMPORT VIEWS and SEP .SCSS files here: 
   ---------------------
 */
-
+@import "views/chrome";
 @import "views/app";
 @import "views/buy-cta";
 
-
-@import "views/_lrg";
+//@import "views/_lrg";
 /* 
   ---------------------
   end of imports 

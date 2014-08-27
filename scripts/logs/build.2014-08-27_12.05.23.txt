@@ -1,0 +1,17 @@
+
+_controllers/Composite.app.js
+----------------
+_lib/jquery-1.11.0.min.js
+_wrappers/jquery.wrapper.js
+_models/Global.config.js
+_models/Global.classes.js
+_models/Global.events.js
+_controllers/_BaseClass.js
+_lib/handlebars-1.0.0.js
+_lib/text.js
+_controllers/_BaseView.js
+_controllers/_BaseComposite.js
+_lib/hammer.min.js
+_lib/paper/paper-core.min.js
+_controllers/View.simplifyapp.js
+_controllers/Composite.app.js

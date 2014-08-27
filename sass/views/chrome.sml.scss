@@ -1,0 +1,17 @@
+@media screen and (max-width: $breakpt-sml) {
+
+.footer {
+	padding-bottom: 20px;
+	height: auto;
+	overflow: hidden;
+	a {
+		height: 40px;
+		float: none;
+		padding: 10px 0px;
+		margin: 0px 10%;
+		display: block;
+		width: 80%;
+	}
+}
+
+}

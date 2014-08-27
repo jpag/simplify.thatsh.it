@@ -1,3 +1,20 @@
+@mixin font-light ( $size: 18px, $color : #333333 ){
+	font-family: 'HelveticaNeue-Light', Arial, Tahoma, sans-serif;
+	font-size: $size;
+	color: $color;
+}
+
+@mixin font-serif( $size: 18px, $color : #333333 ){
+	font-family: Georgia, Times New Roman, serif;
+	font-size: $size;
+	color: $color;
+}
+
+@mixin font-reg ( $size: 18px, $color : #333333 ){
+	font-family: 'HelveticaNeue-Roman', Arial, Tahoma, sans-serif;
+	font-size: $size;
+	color: $color;
+}
 
 @mixin font( $size: 18px, $color : #333333 ){
 	font-family: Helvetica, Arial, sans-serif;

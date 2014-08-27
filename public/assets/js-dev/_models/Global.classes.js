@@ -3,8 +3,8 @@ define([], function() {
 	return {
     	
     	// universal active state
-		a :  'active'
-    
+		a :  'active',
+   		empty : 'empty' 
 	}
 
 });

@@ -50,39 +50,87 @@
 </head>
 <body>
     
-    <div class="app wrapper">
-        <!-- can make this a template or just dump it here -->
-        <div id="simplifyapp">
-            <canvas id="origin-hidden-canvas"></canvas>
-            <canvas id="visible-canvas"></canvas>
-            <svg></svg>
-        </div>
+    <div class="top full-width-bar"></div>
+    
+    <div class="header">
+        <div class="logo">simplify.thatsh.it</div>
+        <p>
+            A tribute to minimal modern art, #SIMPLIFYTHATSHIT turns any JPG into ...
+        </p>
+
+        <p class="nodraganddrop" >
+            You can not drag files on a touch device. Use a desktop computer to drag and drop your own images.
+        </p>
+
     </div>
 
-    <!-- <div class="buy-cta wrapper">
-        <div class="container" >
-            <div class="row">
-                <div class="arrow"></div>
-            </div>
-            <div class="row">
-                <div class="col col-33 buy-product btn"></div>
-                <div class="col col-33 buy-product btn"></div>
-                <div class="col col-33 buy-product btn"></div>
-            </div>
+    
+
+    <div class="app wrapper">
+        <div id="simplifyapp" class="empty">
+            <canvas id="origin-hidden-canvas"></canvas>
+            <canvas id="visible-canvas"></canvas>
         </div>
-    </div> -->
+
+    </div>
+
+    <div id="banner-bar" >
+        <p>
+            Commerorative limited edition #SIMPLIFYTHATSHIT prints are available at the <a>shop</a>.
+        </p>
+
+        <ul>
+            <li><div class="img"></div><p>Lorem ipsum Ut fugiat dolore</p></li>
+            <li><div class="img"></div><p>Lorem ipsum Ut fugiat dolore</p></li>
+            <li><div class="img"></div><p>Lorem ipsum Ut fugiat dolore</p></li>
+        </ul>
+    </div>
+
+    
+    <div class="footer">
+        <a class="universal"></a>
+        <a class="huge"></a>
+        <a class="site"></a>
+        <a class="email"></a>
+    </div>
+
+
     
     <!-- Scripts -->
     <script>
+        var dev = false;
+        
+        if( window.location.origin.search("local") >= 0 ||
+            window.location.origin.search("dev") >= 0 ){
+            dev = true;
+        }
+
+        var imgList = [
+            "imglist/sky.jpg","imglist/flatironfall.jpg",
+            "imglist/kik.jpg","imglist/subwaybedford.jpg",
+            "imglist/williamsburg.jpg","imglist/brooklyn.jpg"
+        ];
+
+        function getRequirePath() {
+            if( dev == true ){
+                return 'assets/js-dev/'
+            }else{
+                return 'assets/js/'
+            }
+        }
+
         // in dev mode : or make this a debug module 
         // window.trace = window.trace || function(str){ console.log( str ) };
         window.trace = function(str){
-          if( window.app.trace == true ){
+          if( dev == true ){
             console.log(str);
           }
         }
     </script>
-    <script data-main="assets/js-dev/App" src="assets/js-dev/_lib/require.js"></script>
+    
+    <!--script data-main="assets/js-dev/App" src="assets/js-dev/_lib/require.js"></script -->
+
+    <script data-main="assets/js/App" src="assets/js/_lib/require.js"></script>
     
 </body>
 </html>

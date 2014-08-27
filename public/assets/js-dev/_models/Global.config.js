@@ -20,7 +20,7 @@ define([], function() {
 
 
       canvas : {
-        maxW : 800,
+        maxW : 600,
         maxH : 600
       }
 

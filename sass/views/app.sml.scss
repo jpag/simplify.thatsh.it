@@ -1,5 +1,27 @@
 @media screen and (max-width: $breakpt-sml) {
-.app{
-	
-}
+
+	#simplifyapp {
+		min-height: 400px;
+	}
+
+	#simplifyapp.empty {
+
+		#visible-canvas {
+			// border: none;
+			// background-image: none;
+			// background-size: 50px auto;
+		}
+	}
+
+	#banner-bar {
+
+		ul {
+			li {
+				float: none;
+				width: 95%;
+				margin: auto;
+				display: block;
+			}
+		}
+	}
 }

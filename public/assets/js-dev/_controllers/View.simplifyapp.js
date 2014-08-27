@@ -6,7 +6,7 @@
  *  http://www.html5rocks.com/en/tutorials/dnd/basics/
  */
 
- define([
+define([
 	'jQuery',
 	'BaseView',
 	'GlobalConfig',
@@ -15,31 +15,33 @@
 	'Hammer',
 	'Paper'
 	], function(
-		$,
-		BaseView,
-		Config,
-		Classes,
-		Events,
-		Hammer
-		){
+	$,
+	BaseView,
+	Config,
+	Classes,
+	Events,
+	Hammer
+){
 
-		window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
-		window.webkitRequestAnimationFrame || window.oRequestAnimationFrame;
+window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
+window.webkitRequestAnimationFrame || window.oRequestAnimationFrame;
 
-		return BaseView.extend({
-			_Name       : "Simplify app logic",   
-			_Model      : {
+return BaseView.extend({
+	_Name       : "Simplify app logic",   
+	_Model      : {
 
-			},
-			_Template   : null,
-			id          : 'simplifyapp',
+	},
+	_Template   : null,
+	id          : 'simplifyapp',
 
-			hiddenctx   : null,
-			ctx         : null,
-			imgsrc      : null,
+	hiddenctx   : null,
+	ctx         : null,
+	imgsrc      : null,
 
-			availW      : 0,
-			availH      : 0,
+	availW      : 0,
+	availH      : 0,
+
+	mobileWidth : 500,
 
 	// once the image is dropped if it is offset from the top left corner of the canvas
 	imgOffset   : {
@@ -65,6 +67,7 @@
 
 	// test switches
 	devswitches         : {
+							test : false,
 							// show object deteciton mapping:
 							showMapping         : false,
 							// do the object detection logic.
@@ -75,62 +78,49 @@
 						},
 
 
-						testimglist         : [
-		// 0
-		"/testimg.jpg",  
-		// 1
-		"/testimg2.jpg", 
-		// 2
-		"/testimg3.jpg", 
-		// 3
-		"/testimg4.jpg", 
-		// 4
-		"/125901215.jpg", 
-		// 5
-		"/87467861.jpg", 
-		// 6
-		"/72004170.jpg", 
-		// 7
-		"/145597609.jpg", 
-		// 8
-		"/155758005.jpg", 
-		// 9
-		"/87890171.jpg",
-		// 10
-		"/99550181.jpg",
-		// 11
-		"/177253430.jpg",
-		// 12
-		"/187022883.jpg"
-		],
-		testImage : 9,
+	testimglist         : window.imgList,
+	testImage : 0,
+	bkgdalpha : 0,
 
-		bkgdalpha : 0,
+	animating : false,
 
-		init : function() {
+	init : function() {
 
-			this.$el = $("#"+this.id);
-			this.imgsrc = document.createElement("img");
+		this.$el = $("#"+this.id);
+		this.imgsrc = document.createElement("img");
 
-			this._super();
+		this._super();
 
-			this.$canvas = this.$el.find("#visible-canvas");
-
-			this.ctx = this.$el.find("#visible-canvas")[0].getContext('2d');
-			this.hiddenctx = this.$el.find("#origin-hidden-canvas")[0].getContext('2d');
-
-		// paper.setup(this.$canvas[0])
+		this.$canvas = this.$el.find("#visible-canvas");
+		this.ctx = this.$el.find("#visible-canvas")[0].getContext('2d');
+		this.hiddenctx = this.$el.find("#origin-hidden-canvas")[0].getContext('2d');
 
 	},
 
 	bindEvents : function() {
 		var self = this;
 		this._super();
-		this.$el.bind({
+
+		$("body").bind({
 			"drop" : this.handleDrop.bind(this),
-			"dragover" : this.handleDragOver.bind(this),
+			"dragover" : this.handleDragOver.bind(this)
+		})
+
+		this.$el.bind({
 			"click" : function(){
-				self.drawNextImage();
+				
+				self.testImage++;
+				
+				if( self.testImage >= self.testimglist.length ){
+					self.testImage = 0;
+				}
+
+				if( self.devswitches.test == true  ||
+					Modernizr.touch == true ||
+					app.testTouch == true
+				){
+					self.drawNextImage();
+				}
 			}
 		});
 
@@ -144,53 +134,52 @@
 		}, false);
 
 
-		// test insert an image:
-		this.imgsrc.src = this.testimglist[ this.testImage ];
+		if( this.devswitches.test == true ||
+			Modernizr.touch == true ||
+			app.testTouch == true
+			){
+			trace(' touch device....');
+			// test insert an image:
+			this.imgsrc.src = this.testimglist[ this.testImage ];
+			self.$el.removeClass(Classes.empty);
+		}
 
 	},
 
 	handleDragOver : function(e) {
-		trace(' drag over');
 		e.stopPropagation();
 		e.preventDefault();
-
 		e.originalEvent.dataTransfer.dropEffect = 'copy';
-
 	},
 
 	handleDrop : function(ev) {
 		trace(' --- handle the drop --- ' );
 		var self = this;
-
 		ev.stopPropagation(); // Stops some browsers from redirecting.
 		ev.preventDefault();
 
-		// read first file only if there are multiple
-		// TODO: add super impose of multiple images?
 		var file = ev.originalEvent.dataTransfer.files[0];
-		
 		var reader = new FileReader();
-
 		reader.onload = function(event) {
+			
+			self.$el.removeClass(Classes.empty);
 			self.imgsrc.src = event.target.result;
-			// trace( event.target );
-			// trace( event.target.result );
+			// trace( event.target ); // trace( event.target.result );
 		};
 		reader.readAsDataURL(file);        
 	},
 
 	// test
 	drawNextImage : function() {
-		this.testImage++;
-		if( this.testImage >= this.testimglist.length ){
-			this.testImage = 0;
-		}
 		this.imgsrc.src = this.testimglist[ this.testImage ];
 	},
 
 	drawOriginalImageToCanvas : function() {
+		// stop previous animation:
+		this.animating = false;
 		
 		this.clearCanvas();
+		
 
 		trace('\n\n ---- drawOriginalImageToCanvas - draw into context :');
 
@@ -200,7 +189,6 @@
 		h = imgH,
 		x,y;
 		
-
 		if( w > this.availW || h > this.availH ){
 			trace(' ------ img exceeds avail. resize/scale image ------- ');
 			var ratio = imgH / imgW,
@@ -225,16 +213,17 @@
 		this.imgOffset.y = y;
 		this.imgOffset.w = w;
 		this.imgOffset.h = h;
-		//this.ctx.drawImage(this.imgsrc,x,y,w,h);
+
+		this.ctx.drawImage(this.imgsrc,x,y,w,h);
 		this.hiddenctx.drawImage(this.imgsrc,x,y,w ,h );
 		
 		var self = this;
 		setTimeout(function(){
 			trace("raster --- ");
-			
+
 			self.drawEverything();
 
-		}, 0);
+		}, 500);
 	},
 
 	drawEverything : function() {
@@ -242,7 +231,10 @@
 		var w = this.availW;
 		var h = this.availH;
 		trace( ' shape detection '+ w + ' , ' + h );
-		
+		if( w == 0 && h == 0){
+			trace(' ERRROR shape is 0x0')
+			return;
+		}
 		var dat = this.hiddenctx.getImageData(0,0,w,h);
 		trace(dat.width + ' ' + dat.height + ' ' + dat.data.length);
 		
@@ -289,7 +281,6 @@
 		trace(' shapes ' + this.plotted.length );
 		// the shapes drawn: this.plotted.
 		// find the edges of the shapes to draw objects. and find the average color in them.
-
 	},
 
 	// shrink image data to a small size
@@ -784,6 +775,7 @@
 			this.incrementAlpha = 0.0000001;
 			this.alphaBkgd = [];
 
+			this.animating = true;
 			this.animationCycle();
 		}
 	},
@@ -793,6 +785,10 @@
 		var numCompleted = 0;
 		var snapRange = 0.5;
 		var animatebkgd = true;
+
+		if( this.animating == false ){
+			return false;
+		}
 
 		if( animatebkgd == true && this.alphaFadeCanvas != null){
 			// we are going to individually draw the pixels by alpha of the gray scale canvas.
@@ -825,7 +821,7 @@
 					originChannel = data[d];
 					channel = data[d] + 1;
 
-					trace(' not defined yet...' + originChannel + " chan " + channel );
+					// trace(' not defined yet...' + originChannel + " chan " + channel );
 				}
 
 				var customIncrement = incrementAlpha * ((originChannel-125)/255);
@@ -925,6 +921,7 @@
 			trace(' num Completed has maxed');
 			return;
 		}
+
 		trace(' - new frame - \n')
 		window.requestAnimationFrame(this.animationCycle.bind(this));
 	},
@@ -1278,14 +1275,19 @@
 		var mW = Config.canvas.maxW,
 		mH = Config.canvas.maxH;
 
+		w = w * .90;
 
 		if( w > mW ){
 			w = mW;
 		}
 
-		if( h > mH ){
-			h = mH;
-		}
+
+		// make it a square
+		h = w;
+
+		// if( h > mH ){
+		// 	h = mH;
+		// }
 
 		this.availH = h;
 		this.availW = w;
