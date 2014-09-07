@@ -1,5 +1,13 @@
 ## simplify it
 
+- rotation / shapes are more different / more varity
+- export feature
+
+- server / folder save write to server
+- export/ save to desktop
+
+
+
 ## references
 	going paperjs
 	http://paperjs.org/download/

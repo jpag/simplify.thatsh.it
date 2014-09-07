@@ -108,6 +108,48 @@ p.nodraganddrop {
 }
 
 
+.export-wrapper {
+	position: relative;
+	width: 100%;
+	bottom: 0px;
+	z-index: -1;
+	margin-top: -150px;
+	padding-bottom: 50px;
+	@include alpha(0);
+	@include animate-default(all,300ms);
+
+	&.active {
+		@include alpha(100);
+		margin-top: -50px;
+
+		z-index: 99;
+	}
+}
+
+#export-btn {
+	background: #000;
+	padding: 10px;
+	color: #fff;
+	margin: auto;
+	position: relative;
+	cursor: pointer;
+	text-transform: uppercase;
+	text-align: center;
+	width: 100px;
+	display: block;
+	border: 1px solid #000;
+	// margin-top: -200px;
+
+	&.active {
+		margin-top: -50px;
+	}
+
+	&:hover {
+		background: #fff;
+		border: 1px solid #000;
+		color: #000;
+	}
+}
 
 
 @import "chrome.sml";

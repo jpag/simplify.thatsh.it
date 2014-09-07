@@ -1,3 +1,113 @@
+// look for shapes
+//this.shapes(dat,w,h, 200, 0.5, 0.3, false, 'fullrect');
+if( this.devswitches.lessdots ){
+    this.shapes(dat,w,h, 10, 0.2, 0.15, false, 'arc');
+    this.shapes(dat,w,h, 5, 0.3, 0.25, false, 'arc');
+}
+//this.shapes(dat,w,h, 200, 0.01, 0.5, false, 'rect');
+//dat = this.contrast(dat, 100);
+
+
+// tiny dots:
+if( this.devswitches.lotsofdots ){
+    this.shapes(dat,w,h, 5, 0.01, 0.012, false, 'arc');
+    this.shapes(dat,w,h, 220, 0.005, 0.005, false, 'arc');
+}
+
+shapes : function(dat,w,h, threshold, incremental, radius, alpharan, shapetype) {
+        // determine the radius by w/h
+        var index, pixel,left, top, right, bottom = undefined;
+        var x = 0;
+        var y = 0;
+        var incrementy = Math.round(dat.width * incremental);
+        var incrementx = Math.round(dat.height * incremental);
+        
+        trace(dat.width + ' ' + dat.height + ' ' + dat.data.length );
+        trace('incrementx '+ incrementy + ', incrementx '+ incrementx);
+
+        //return;
+        var r = Math.floor(dat.width * radius) / 2;
+        var rh = Math.floor(dat.height * radius) / 2;
+        if( r > rh ){
+            r = rh;
+        }
+
+        for(y=0; y<dat.height; (y+=incrementy)){
+
+            for(x=0; x<dat.width; (x+=incrementx)){
+                //trace( 'x '+ x + ' , y ' + y );
+                
+                index = (x + y * dat.width) * 4;
+                
+                // get the RGB's of pixel's data
+                pixel = {
+                    r     : dat.data[index], 
+                    g   : dat.data[index+1], 
+                    b    : dat.data[index+2],
+                    a   : dat.data[index+3] 
+                };
+
+                if( pixel.a != 255 ){
+                    continue;
+                }
+                
+                // Get the values of the surrounding pixels
+                // Color data is stored [r,g,b,a,r,g,b,a]
+                
+                left = {
+                    r   :dat.data[index-4], 
+                    g   :dat.data[index-3], 
+                    b   :dat.data[index-2] 
+                };
+                
+                right = {
+                    r   :dat.data[index+4], 
+                    g   :dat.data[index+5],
+                    b   :dat.data[index+6] 
+                };
+
+                topindex = index-(dat.width*4);
+
+                top = {
+                    r   : dat.data[topindex],
+                    g   : dat.data[topindex+1],
+                    b   : dat.data[topindex+2]
+                };
+                
+                bottomindex = index+(dat.width*4);
+
+                bottom = {
+                    r   : dat.data[bottomindex],
+                    g   : dat.data[bottomindex+1],
+                    b   : dat.data[bottomindex+2]
+                };
+
+                //Compare it all.
+                if(this.comparepx(pixel,left,threshold)){
+                    
+                }else if(this.comparepx(pixel,right,threshold)){
+                    
+                }else if(this.comparepx(pixel,top,threshold)){
+                    
+                }else if(this.comparepx(pixel,bottom,threshold)){
+                    
+                }else{
+                    continue;
+                }
+                
+                if( shapetype == 'arc' ){
+                    this.plotPixel(x,y, pixel, r, alpharan);
+                }else if( shapetype == 'fullrect'){
+                    this.plotFullLengthRect(x,y, pixel, r, alpharan);
+                }else if(shapetype == 'rect' ){
+                    this.plotRect(x,y, pixel, r, alpharan);
+                }
+            }
+        }
+    },
+
+
+
 
     drawAvgFromScaleDown : function(dat,ctx){
         var shrinkCan = {}
@@ -315,4 +425,190 @@
         }
     },
 
-    
+
+
+
+    comparepx   : function(px,px2, threshold){
+        var minRGB = (255 * 3) * .15;
+        var maxRGB = (255 * 3) * .85;
+
+        if( px.r + px.g + px.b >= maxRGB ){
+            return false;
+        }else if( px.r + px.g + px.b <= minRGB ){
+            return false;
+        /*}else if( 
+            (px2.red > px.red-threshold) &&
+            (px2.green > px.green-threshold) &&
+            (px2.blue > px.blue-threshold) &&
+            (px2.red < px.red+threshold) &&
+            (px2.green > px.green+threshold) &&
+            (px2.blue > px.blue+threshold)
+        ){
+        return true;*/
+        }else if(
+        (px2.r > px.r-threshold) &&
+        (px2.r < px.r+threshold)
+        ){
+            // draw red
+            return true;
+        }else if(
+            (px2.g > px.g-threshold) &&
+            (px2.g < px.g+threshold)
+            ){
+            // draw green
+            return true;
+        }else if(
+            (px2.b > px.b-threshold) &&
+            (px2.b < px.b+threshold)
+            ){
+            // draw blue
+            return true;
+        }else{
+            return false;
+        }
+    },
+
+    plotRect  : function(x,y,pixel,r,alpharan) {
+        // either draw full width or horizontal
+        this.ctx.beginPath();
+        
+        var levelOfRandom = 0.05;
+        var offsetx = this.availW * levelOfRandom;
+        var offsety = this.availH * levelOfRandom;
+        var w,h;
+
+        w = r*0.5*Math.random();
+        h = r*0.5*Math.random();
+        x += (Math.random() * offsetx) - (offsetx*2);
+        y += (Math.random() * offsety) - (offsety*2);
+
+        var paddingFromEdge = 25;
+
+        if( (x + w + paddingFromEdge) > this.availW ){
+            x = this.availW - (w + paddingFromEdge)
+        }else if( x < paddingFromEdge ){
+            x = paddingFromEdge;
+        }
+
+        if( (y + h + paddingFromEdge) > this.availH ){
+            y = this.availH - (h + paddingFromEdge)
+        }else if( y < paddingFromEdge ){
+            y = paddingFromEdge;
+        }
+
+
+        var colorData = pixel;
+        var alpha = 1;
+        if( alpharan ){
+            alpha = Math.random();
+        }
+        
+        //trace('x '+x+',y '+y+' w '+ w + ' h ' + h + 'RGBA('+colorData.r+','+colorData.g+','+colorData.b+','+alpha+')' );
+
+        this.ctx.rect(x,y,w,h);
+        this.ctx.fillStyle = 'RGBA('+colorData.r+','+colorData.g+','+colorData.b+','+alpha+')';
+        this.ctx.fill();
+        
+        
+        // resets path info.
+        this.ctx.beginPath();
+        this.plotted.push({x:x,y:y, rgb: colorData, a: alpha});
+    },
+
+
+    plotFullLengthRect  : function(x,y,pixel,r,alpharan) {
+        // either draw full width or horizontal
+        this.ctx.beginPath();
+        
+        var levelOfRandom = 0.05;
+        var offsetx = this.availW * levelOfRandom;
+        var offsety = this.availH * levelOfRandom;
+        var w,h;
+
+        w = h = r*2.5*Math.random();
+
+
+
+        var horizon = true; //(Math.random() < 0.5 )? true : false;
+        if (horizon){
+            x = 0;
+            y += (Math.random() * offsety) - (offsety*2);
+            w = this.availW;
+        }else{
+            y = 0;
+            x += (Math.random() * offsetx) - (offsetx*2);
+            h = this.availH;
+        }
+
+        var colorData = pixel;
+        var alpha = 1;
+        if( alpharan ){
+            alpha = Math.random();
+        }
+        
+        trace('x '+x+',y '+y+' w '+ w + ' h ' + h + 'RGBA('+colorData.r+','+colorData.g+','+colorData.b+','+alpha+')' );
+
+        this.ctx.rect(x,y,w,h);
+        this.ctx.fillStyle = 'RGBA('+colorData.r+','+colorData.g+','+colorData.b+','+alpha+')';
+        this.ctx.fill();
+        
+        // resets path info.
+        this.ctx.beginPath();
+        this.plotted.push({x:x,y:y, rgb: colorData, a: alpha});
+    },
+
+    plotPixel  : function(x,y,pixel,r,alpharan) {
+        this.ctx.beginPath();
+        
+        var levelOfRandom = 0.2;
+        var offsetx = this.availW * levelOfRandom;
+        var offsety = this.availH * levelOfRandom;
+        var radius = r*2.5*Math.random();
+
+        x += (Math.random() * offsetx) - (offsetx/2);
+        y += (Math.random() * offsety) - (offsety/2);
+
+
+        var paddingFromEdge = 25;
+
+        if( (x + radius + paddingFromEdge) > this.availW ){
+            x = this.availW - (radius + paddingFromEdge)
+        }else if( (x - radius) < paddingFromEdge ){
+            x = paddingFromEdge + radius;
+        }
+
+        if( (y + radius + paddingFromEdge) > this.availH ){
+            y = this.availH - (radius + paddingFromEdge)
+        }else if( (y - radius) < paddingFromEdge ){
+            y = paddingFromEdge + radius;
+        }
+
+        this.ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+        //this.ctx.arc(x, y, r*Math.random(), 0, 2 * Math.PI, false);
+
+        var colorData = pixel;
+        var alpha = 1;
+        if( alpharan ){
+            alpha = Math.random();
+        }
+        
+
+        this.ctx.fillStyle = 'RGBA('+colorData.r+','+colorData.g+','+colorData.b+','+alpha+')';
+        this.ctx.fill();
+        
+        // resets path info.
+        this.ctx.beginPath();
+        this.plotted.push({x:x,y:y, rgb: colorData, a: alpha});
+    },
+
+    plotPoint  : function(x,y) {
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, 20, 0, 2 * Math.PI, false);
+
+        var colorData = this.getPixelRGB(x,y,this.hiddenctx,false);
+
+        this.ctx.fillStyle = 'RGB('+colorData.r+','+colorData.g+','+colorData.b+')';
+        this.ctx.fill();
+        // resets path info.
+        this.ctx.beginPath();
+    },

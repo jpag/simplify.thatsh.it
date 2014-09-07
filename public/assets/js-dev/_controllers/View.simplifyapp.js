@@ -67,7 +67,7 @@ return BaseView.extend({
 
 	// test switches
 	devswitches         : {
-							test : false,
+							test : true,
 							// show object deteciton mapping:
 							showMapping         : false,
 							// do the object detection logic.
@@ -127,21 +127,23 @@ return BaseView.extend({
 		this.redraw = false;
 		this.$doc.trigger(Events.dom.forceResize);
 
+		
 		this.imgsrc.addEventListener("load", function () {
 			trace(' IMAGE loaded - redraw : ');
 			self.redraw = true;
 			self.drawOriginalImageToCanvas();
 		}, false);
 
-
 		if( this.devswitches.test == true ||
 			Modernizr.touch == true ||
 			app.testTouch == true
 			){
-			trace(' touch device....');
+
 			// test insert an image:
-			this.imgsrc.src = this.testimglist[ this.testImage ];
-			self.$el.removeClass(Classes.empty);
+			setTimeout(function(){
+				self.imgsrc.src = self.testimglist[ self.testImage ];
+				self.$el.removeClass(Classes.empty);
+			}, 750 );
 		}
 
 	},
@@ -177,11 +179,10 @@ return BaseView.extend({
 	drawOriginalImageToCanvas : function() {
 		// stop previous animation:
 		this.animating = false;
-		
 		this.clearCanvas();
-		
+		$(".export-wrapper").removeClass("active");
 
-		trace('\n\n ---- drawOriginalImageToCanvas - draw into context :');
+		trace('\n\n---- drawOriginalImageToCanvas - draw into context :');
 
 		var imgW = this.imgsrc.width,
 		imgH = this.imgsrc.height,
@@ -190,19 +191,17 @@ return BaseView.extend({
 		x,y;
 		
 		if( w > this.availW || h > this.availH ){
-			trace(' ------ img exceeds avail. resize/scale image ------- ');
+			trace(' img exceeds avail. resize/scale image');
 			var ratio = imgH / imgW,
 			w = this.availW,
 			h = ratio * w;
-			trace( w + ' -  ' + h + ' ratio ' + ratio )
 			if( h > this.availH ){
 				trace(' height too large');
 				h = this.availH;
 				ratio = imgW/imgH;
 				w = ratio * h;
-
-				trace( w + ' -  ' + h + ' ratio ' + ratio )
 			}
+			// trace( w + ' -  ' + h + ' ratio ' + ratio )
 		}
 
 		// calculate this one.
@@ -217,12 +216,10 @@ return BaseView.extend({
 		this.ctx.drawImage(this.imgsrc,x,y,w,h);
 		this.hiddenctx.drawImage(this.imgsrc,x,y,w ,h );
 		
+		trace('\n\n');
 		var self = this;
 		setTimeout(function(){
-			trace("raster --- ");
-
 			self.drawEverything();
-
 		}, 500);
 	},
 
@@ -230,55 +227,34 @@ return BaseView.extend({
 		
 		var w = this.availW;
 		var h = this.availH;
-		trace( ' shape detection '+ w + ' , ' + h );
+		trace( 'Shape Detection '+ w + ' , ' + h );
 		if( w == 0 && h == 0){
 			trace(' ERRROR shape is 0x0')
 			return;
 		}
 		var dat = this.hiddenctx.getImageData(0,0,w,h);
-		trace(dat.width + ' ' + dat.height + ' ' + dat.data.length);
-		
+		trace('Shape data wxh len ' + dat.width + ' ' + dat.height + ' ' + dat.data.length + '\n----');
+
 		//empty it!
 		this.plotted = [];
-
 		//dat = this.contrast(dat, 10);
 		this.drawAvgColor(dat,this.ctx);
 		
 		// this.drawAvgFromDictChannels(dat,this.ctx, 15);
 		// this.drawAvgFromScaleDown(dat,this.ctx);
-		
 		// find those unique colors that stand out from the background color average :
 		var shapes = this.findGrayScaleShapes();
 
 		if( this.devswitches.drawHorizon == true ){
 			// almost all images have a horizon find one...?
-
 		}
 
 		// time to draw these shapes:
 		if( this.devswitches.objectDetect == true ){
+			trace('\n\n ------ Draw defined objects ' + shapes.length );
 			this.drawDefinedObjects(shapes);
 		}
 
-		// look for shapes
-		//this.shapes(dat,w,h, 200, 0.5, 0.3, false, 'fullrect');
-		if( this.devswitches.lessdots ){
-			this.shapes(dat,w,h, 10, 0.2, 0.15, false, 'arc');
-			this.shapes(dat,w,h, 5, 0.3, 0.25, false, 'arc');
-		}
-		//this.shapes(dat,w,h, 200, 0.01, 0.5, false, 'rect');
-		//dat = this.contrast(dat, 100);
-
-		
-		// tiny dots:
-		if( this.devswitches.lotsofdots ){
-			this.shapes(dat,w,h, 5, 0.01, 0.012, false, 'arc');
-			this.shapes(dat,w,h, 220, 0.005, 0.005, false, 'arc');
-		}
-
-		// draw the shapes:
-		
-		trace(' shapes ' + this.plotted.length );
 		// the shapes drawn: this.plotted.
 		// find the edges of the shapes to draw objects. and find the average color in them.
 	},
@@ -318,18 +294,17 @@ return BaseView.extend({
 
 		for(var i = 0; i < grayScaleCanvas.dat.data.length; i += 4) {
 			var brightness = 0.34 * grayScaleCanvas.dat.data[i] + 0.5 * grayScaleCanvas.dat.data[i + 1] + 0.16 * grayScaleCanvas.dat.data[i + 2];
-		  // red
-		  grayScaleCanvas.dat.data[i] = brightness;
-		  // green
-		  grayScaleCanvas.dat.data[i + 1] = brightness;
-		  // blue
-		  grayScaleCanvas.dat.data[i + 2] = brightness;
-	  }
-	  grayScaleCanvas.ctx.putImageData(grayScaleCanvas.dat,0,0);
+			// red
+			grayScaleCanvas.dat.data[i] = brightness;
+			// green
+			grayScaleCanvas.dat.data[i + 1] = brightness;
+			// blue
+			grayScaleCanvas.dat.data[i + 2] = brightness;
+	  	}
+	  	grayScaleCanvas.ctx.putImageData(grayScaleCanvas.dat,0,0);
 
-	  if( showMapping == true ){
-		this.ctx.drawImage( grayScaleCanvas.cv, 0,0, w, h);
-
+	 	if( showMapping == true ){
+			this.ctx.drawImage( grayScaleCanvas.cv, 0,0, w, h);
 			// grayScaleCanvas.ctx.drawImage( this.$canvas[0], 0,0, w, h);
 			// grayScaleCanvas.dat = grayScaleCanvas.ctx.getImageData(0,0,w,h);
 		}
@@ -409,7 +384,7 @@ return BaseView.extend({
 			// at those 8 surrounding points:
 			// only do upto the current shape we are checking
 			// start at the shape, and go progressively further away (left and top)
-			//trace( '\n\n ----- loop previous  ' + (s-1) );
+			
 			for( var si = (s-1); si >= 0; si-- ){
 				// increment backwards starting at (currentshape - 1)
 				var compared = shapes[si];
@@ -422,11 +397,9 @@ return BaseView.extend({
 						match[0] = true;
 					}else if( compared.length >= 4 ){
 						// matrix val is >= to x and <= to width
-
 						if( matrix.x[mx] >= compared[0] && 
 							matrix.x[mx] <= (compared[0]+compared[2]) ){
 							// trace(' found x match between x and w');
-							// is inbetween x and width;
 							match[0] = true;
 						}
 					}
@@ -448,7 +421,7 @@ return BaseView.extend({
 
 				if( match[0] == true && match[1] == true ){
 					
-					trace(' match between the two');
+					// trace('  match between the two');
 					var cx = compared[0] + 0;
 					var cy = compared[1] + 0;
 					var cw = 1;
@@ -492,13 +465,6 @@ return BaseView.extend({
 					// regardless of what we did; dump the shape previous now:
 					shapes[si] = null;
 
-					if( id == 7 ){
-						trace('id: ' + id + ' at s index: ' + s + ' Match: shape x,y = ' + x + ','+y  );
-						trace( '   si ' + si + ' - ' + cx +','+cy );
-						trace( $.extend([], shapes[s]) );
-						trace(" \n\n" );
-					}
-
 				}
 			}// end of looping matrix to previous shapes.
 
@@ -507,7 +473,7 @@ return BaseView.extend({
 
 		// clean up shapes:
 		// trace( shapes );
-		trace(' original shapes : ' + shapes.length);
+		trace('  original shapes : ' + shapes.length);
 
 		for( var s = shapes.length-1; s >= 0; s-- ){
 			if( shapes[s] == null ){
@@ -517,12 +483,12 @@ return BaseView.extend({
 			}
 		}
 
-		trace(' shapes cleaned : ' + shapes.length);
+		trace('  shapes cleaned : ' + shapes.length);
 		// order shapes by size (remove after 5);
 		// numerically put biggest first in the index.
 		shapes.sort(function(a, b){
 			if( a.length >= 4 && b.length >= 4 ){
-				trace(' sorting has length match ' );
+				trace('  sorting has length match ' );
 				return (b[2]*b[3]) - (a[2]*a[3]);
 			}else if( a.length >= 4 && b.length < 4 ){
 				return -1;
@@ -556,14 +522,17 @@ return BaseView.extend({
 			var sh = 20;
 			var id = "NA";
 
+			// interval w  interveral h
+			var iw = shapes[s][2];
+			var ih = shapes[s][3];
+
 			if( shapes[s].length >= 4 ){
 				sw = shapes[s][2] / downscale;
 				sh = shapes[s][3] / downscale;
 				id = shapes[s][4];
 			} else if( skipshapeswithNoWidth == true) {
 				// no width/or height skip it:
-				// let us make sure these aren't the only shapes...
-
+				// make sure these aren't the only shapes ?
 				continue;
 			}
 
@@ -571,7 +540,6 @@ return BaseView.extend({
 			// trace(shapes[s]);
 			
 			if( showMapping == true ){
-
 				this.drawRect(sx,sy, {
 					r: 250, 
 					g: 240, 
@@ -583,9 +551,10 @@ return BaseView.extend({
 
 			if( sw * sh >= maxSurfaceArea ){
 				// skip it too big.
-				continue;
+				// continue;
 			}
-			shapesreturn.push({x: sx, y: sy, w: sw, h: sh});
+
+			shapesreturn.push({x: sx, y: sy, w: sw, h: sh, iw: iw, ih: ih});
 		}
 		// trace( " - shapesToReturn " + shapesreturn.length );
 		return shapesreturn;
@@ -597,14 +566,11 @@ return BaseView.extend({
 	},
 
 	drawAvgColor : function(dat,ctx, ran){
-		//var red = 255/2, blue = 255/2, green = 255/2;
-
 		var red = 0, blue = 0, green = 0;
 		var alpha = 1;
 		var divisible = (dat.data.length/4);
 
 		if(typeof(ran) !== 'undefined' ){
-			trace(" RANDOM!!!!!")
 			var range = dat.width * dat.height;
 			divisible = ran;
 
@@ -614,19 +580,12 @@ return BaseView.extend({
 				red += dat.data[r];
 				green += dat.data[r+1];
 				blue += dat.data[r+2];
-
 			}
 		}else{
-
 			for( var i=0; i < dat.data.length; i+=4){
-				
 				if( dat.data[i+3] != 255 ){
 					continue;
 				}
-
-				// red = Math.round((dat.data[i] + red)/2);
-				// green = Math.round((dat.data[i+1] + green)/2);
-				// blue = Math.round((dat.data[i+2] + blue)/2);
 
 				red += dat.data[i];
 				green += dat.data[i+1];
@@ -640,7 +599,7 @@ return BaseView.extend({
 		green = Math.round(green / divisible);
 		blue = Math.round(blue / divisible);
 
-		trace( "RGBA("+red+","+green+","+blue+","+alpha+")" );
+		trace( "----\n Avg Bkgd Color found: RGBA("+red+","+green+","+blue+","+alpha+") \n----\n");
 		ctx.fillStyle="RGBA("+red+","+green+","+blue+","+alpha+")";
 		ctx.fillRect(0,0,this.availW,this.availH);
 
@@ -650,13 +609,11 @@ return BaseView.extend({
 	contrast : function(dat, contrast){
 		// http://stackoverflow.com/questions/10521978/html5-canvas-image-contrast
 		var factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-
 		for(var i=0;i<dat.data.length;i+=4){
 			dat.data[i] = factor * (dat.data[i] - 128) + 128;
 			dat.data[i+1] = factor * (dat.data[i+1] - 128) + 128;
 			dat.data[i+2] = factor * (dat.data[i+2] - 128) + 128;
 		}
-
 		return dat;
 	},
 
@@ -670,18 +627,44 @@ return BaseView.extend({
 			var y = shape.y;
 			var r = ( (shape.w > shape.h)? shape.w : shape.h )/2;
 			var alpha = 1;
-			var type = 'arc';//( Math.random() < 0.5 )? 'arc' : 'rect';
+			var type = 'rect'; // circle
 			var maxPercent = 0.35;
+			var faces = 0;
+			var strokeit = (Math.random() > 0.75 )? true : false;
 
-			if( r > (this.availW * maxPercent) || r > (this.availH * maxPercent) ){
-				type = 'rect';
-			} 
+			// if( r > (this.availW * maxPercent) || r > (this.availH * maxPercent) ){
+			// 	type = 'rect';
+			// } 
+
+			if( Math.abs(shape.iw - shape.ih) <= 1 ){
+				 
+				 /*if( Math.random() > 0.4 ){
+				 	type = 'arc';	
+				 }else{
+				 	*/
+				 	type = 'polygon';
+				 	faces = Math.round(Math.random() * 3) + 3;
+				 	
+				 	if( faces == 4 ){
+				 		faces--;
+				 	}
+				 //}
+			}else if(
+				(shape.ih == 1 && shape.iw >= 1) ||
+				(shape.iw == 1 && shape.ih >= 1) ||
+				(Math.round() > 0.75)
+			){
+				type = 'line';
+			}
+
+			//trace(' type ' + type + " shape.iw " + shape.iw + " shape.ih " + shape.ih );
+
 			var edgePadding = 20;
 			//color pick x,y
 			var cpx,cpy;
 			// determine if this is an arc or rectangle, 
 			// then make sure it is in bounds.
-			if( type == 'arc' ){
+			if( type == 'arc' || type == 'polygon' ){
 				// if we do the x by radius we risk loosing the actual defined shape
 				// and color pick outside of the range.
 				x +=  shape.w / 2;
@@ -701,7 +684,8 @@ return BaseView.extend({
 				}else if( y - r <= edgePadding ){
 					y = r + edgePadding;
 				}
-			}else{
+
+			}else if( type == 'rect' || type == 'line' ){
 				// define point BEFORE we reposition because of the edge:
 				cpx = x + shape.w/2;
 				cpy = y + shape.h/2;
@@ -717,6 +701,11 @@ return BaseView.extend({
 				}else if( y <= edgePadding ){
 					y = edgePadding;
 				}
+			}else if( type == 'line' ){
+				cpx = x + shape.w/2;
+				cpy = y + shape.h/2;
+
+
 			}
 
 			if( this.devswitches.showMapping == true){
@@ -725,36 +714,42 @@ return BaseView.extend({
 			}else{
 				test = false;
 			}
+
 			var colorData = this.getPixelRGB( cpx, cpy, this.hiddenctx , test);
 			var cur, dest;
 
-			//trace( colorData );
-			//trace( x +','+y+ ' ' +shape.w +','+shape.h)
+			var increment = Math.random() * 0.1;
+			if( increment < 0.02 ){
+				increment = 0.02;
+			}
+
 			if( this.devswitches.animate == false ){
-				this.ctx.fillStyle = 'RGBA('+colorData.r+','+colorData.g+','+colorData.b+','+alpha+')';
-				if( type == 'rect' ){
-					this.ctx.fillRect(x,y,shape.w,shape.h);
-					cur = dest = [shape.w,shape.h];
-				}else{
-					this.ctx.arc(x, y, r, 0, 2 * Math.PI, false);    
-					this.ctx.fill();
-					cur = dest = [r,r];
-				}
-				// resets path info.
-				this.ctx.beginPath();
+				increment = 1000;	
 			}else{
 				if( type == 'rect' ){
 					dest = [shape.w,shape.h];
 					cur = [0,0];
-				}else{
+				}else if( type == 'arc' || type == 'polygon' ){
 					cur = [0,0];
 					dest = [r,r];
+				}else if( type == 'line' ){
+					cur = [0,0];
+					dest = [shape.w, shape.h];
 				}
 			}
 
-			var increment = Math.random() * 0.15;
+			this.plotted.push({x:x,y:y, rgb: colorData, a: alpha, 
+								type: type, 
+								current:cur, 
+								destination:dest, 
+								increment: increment, 
+								faces: faces,
+								strokeit : strokeit,
+								rotation : 0,
+								rotateIncrement : (Math.random() > 0.5)? -0.01 : 0.01
+							});
 
-			this.plotted.push({x:x,y:y, rgb: colorData, a: alpha, type: type, current:cur, destination:dest, increment: increment });
+			trace(s + ' shape type ' + type );
 		}
 
 		if( this.devswitches.animate == true ){
@@ -770,8 +765,8 @@ return BaseView.extend({
 			this.alphaFadeCanvas.ctx = this.alphaFadeCanvas.cv.getContext('2d');
 			this.alphaFadeCanvas.ctx.drawImage( this.grayScaleCanvas.cv, 0,0, this.alphaFadeCanvas.cv.height, this.alphaFadeCanvas.cv.height);
 			this.alphaFadeCanvas.dat = this.alphaFadeCanvas.ctx.getImageData(0,0,this.alphaFadeCanvas.cv.height,this.alphaFadeCanvas.cv.height);
-
-			//this.incrementAlpha = 0.000001;
+			
+			// this.alphaFadeCanvas = null;
 			this.incrementAlpha = 0.0000001;
 			this.alphaBkgd = [];
 
@@ -784,91 +779,21 @@ return BaseView.extend({
 		//var incremental = 0.1;
 		var numCompleted = 0;
 		var snapRange = 0.5;
-		var animatebkgd = true;
+		var animatebkgd = false;
 
 		if( this.animating == false ){
 			return false;
 		}
 
 		if( animatebkgd == true && this.alphaFadeCanvas != null){
-			// we are going to individually draw the pixels by alpha of the gray scale canvas.
-
-			this.ctx.clearRect(0,0,this.availW, this.availH);
-			
-			var w = this.alphaFadeCanvas.dat.width; 
-			var h = this.alphaFadeCanvas.dat.height;
-			var data = this.alphaFadeCanvas.dat.data;
-			
-			var incrementAlpha = this.incrementAlpha;
-			var bkgdCompleteProcess = 0;
-			var ratio = {w: this.availW / w, h: this.availH/h};
-			
-			for( var d = 0; d < data.length; d += 4 ){
-				// assess on a scale of 0 - 255 what the opacity should be
-				var px = d/4;
-				var x = px % w * ratio.w;
-				var y = Math.floor(px / w) * ratio.h;
-				var rectSizeW = 2 * ratio.w;
-				var rectSizeH = 2 * ratio.h;
-				
-				var maxChannel = 255 * 3;
-				var channel, originChannel;
-				
-				if( this.alphaBkgd.length >= d ){
-					channel = this.alphaBkgd[d];
-					originChannel = data[d];
-				}else{
-					originChannel = data[d];
-					channel = data[d] + 1;
-
-					// trace(' not defined yet...' + originChannel + " chan " + channel );
-				}
-
-				var customIncrement = incrementAlpha * ((originChannel-125)/255);
-
-				var channelAlpha = channel + Math.abs( ((channel - originChannel)) * customIncrement);
-				var calcAlpha = (channelAlpha - originChannel) / (maxChannel - originChannel);
-				//var calcAlpha = (channelAlpha) / (maxChannel);
-
-				if( calcAlpha >= 0.99 ){
-					calcAlpha = 1;
-					bkgdCompleteProcess++;
-					channelAlpha = maxChannel;
-				}
-
-				this.alphaBkgd[d] = channelAlpha;
-					
-				//trace(d + ' data d: '+ this.alphaFadeCanvas.dat[d+2] + ' - - ' + calcAlpha + ' alpha ' + alpha);
-				//this.ctx.fillStyle="RGBA(255,100,200,0.1)";
-				this.ctx.fillStyle="RGBA("+this.colorAvg.r+","+	this.colorAvg.g+","+this.colorAvg.b+","+calcAlpha+")";
-				this.ctx.fillRect( (x - rectSizeW/2),( y - rectSizeH/2), rectSizeW , rectSizeH);
-				
-				//this.ctx.fillStyle="RGBA(25,200,100,0.4)";
-				// this.ctx.arc(x, y, 300, 0, 2 * Math.PI, false);
-				// this.ctx.fill();
-				// this.ctx.beginPath();	
-
-			}
-			
-			this.ctx.beginPath();
-
-			// trace( bkgdCompleteProcess + ' / ' + (data.length / 4) );
-			if( bkgdCompleteProcess/(data.length/4) == 1 ){
-				numCompleted += 1;
-			}
-			// regardless
-			// numCompleted = 1;
-
-			this.incrementAlpha += 0.001;
-
+			numCompleted = this.pixelateBkgdToSolid();
 		}else{
-			
-			this.bkgdalpha = this.bkgdalpha + (Math.abs(this.bkgdalpha - 1) * 0.01);
+
+			this.bkgdalpha = this.bkgdalpha + (Math.abs(this.bkgdalpha - 1) * 0.03);
 			if( this.bkgdalpha >= 0.99 ) {
 				this.bkgdalpha = 1;
 				numCompleted += 1;
 			}
-			
 			this.ctx.clearRect(0,0,this.availW, this.availH);
 			this.ctx.fillStyle="RGBA("+this.colorAvg.r+","+this.colorAvg.g+","+this.colorAvg.b+","+this.bkgdalpha+")";
 			this.ctx.fillRect(0,0,this.availW,this.availH);
@@ -880,9 +805,10 @@ return BaseView.extend({
 			var x = shape.x;
 			var y = shape.y;
 			var incremental = shape.increment;
+
 			this.ctx.fillStyle = 'RGBA('+shape.rgb.r+','+shape.rgb.g+','+shape.rgb.b+',1)';
 			
-			if( shape.type == 'rect' ){
+			if( shape.type == 'rect' || shape.type == 'line' ){
 				var newW = shape.current[0] + Math.abs((shape.current[0] - shape.destination[0]) * incremental);
 				var newH = shape.current[1] + Math.abs((shape.current[1] - shape.destination[1]) * incremental);
 
@@ -901,123 +827,172 @@ return BaseView.extend({
 
 				shape.current[0] = newW;
 				shape.current[1] = newH;
-				this.ctx.fillRect(x, y, newW, newH);
+				
+				if( shape.type == 'line' ){
+					
+					this.ctx.moveTo(x,y);
+					this.ctx.lineTo(x+newW,y+newH);
+					this.ctx.lineWidth = 5;
+					this.ctx.strokeStyle = 'RGBA('+shape.rgb.r+','+shape.rgb.g+','+shape.rgb.b+',1)';
+					this.ctx.stroke();
 
-			}else{
+				}else{
+					if( shape.strokeit == true ){
+						this.ctx.strokeRect(x, y, newW, newH);
+					}else{
+						this.ctx.fillRect(x, y, newW, newH);
+					}
+
+				}
+
+				this.ctx.beginPath();
+
+			}else if(shape.type == 'arc' || 
+					shape.type == 'polygon' ){
 
 				var newR = shape.current[0] + Math.abs((shape.current[0] - shape.destination[0]) * incremental);
-				if( newR >= (shape.destination[1] - snapRange) ){
-					newR = shape.destination[1];
+				if( newR >= (shape.destination[0] - snapRange) ){
+					newR = shape.destination[0];
 					numCompleted += 1;
 				}
-				shape.current[0] = newR;
-				this.ctx.arc(x, y, newR, 0, 2 * Math.PI, false);
-				this.ctx.fill();
-			}
-			this.ctx.beginPath();    
-		}
 
+				shape.current[0] = newR;	
+				
+				if( shape.type == 'polygon' ){
+					
+					shape.rotation = (shape.rotation + shape.rotateIncrement) * 0.97;
+					this.ctx.save(); // saves the coordinate system
+					this.ctx.translate(x,y); // now the position (0,0) is found at (250,50)
+					this.ctx.rotate(shape.rotation); // rotate around the start point of your line
+
+					//http://scienceprimer.com/drawing-regular-polygons-javascript-canvas
+					var numberOfSides = shape.faces,
+						size = newR,
+						Xcenter = 0, 	//x,
+						Ycenter = 0;	//y;
+
+					this.ctx.beginPath();
+					this.ctx.moveTo (Xcenter +  size * Math.cos(0), Ycenter +  size *  Math.sin(0));          
+
+					for (var i = 1; i <= numberOfSides;i += 1) {
+						var linetoX = Xcenter + size * Math.cos(i * 2 * Math.PI / numberOfSides);
+						var linetoY = Ycenter + size * Math.sin(i * 2 * Math.PI / numberOfSides);
+						this.ctx.lineTo(linetoX, linetoY);
+					}
+
+					this.ctx.restore();
+
+				}else{
+					this.ctx.arc(x, y, newR, 0, 2 * Math.PI, false);
+				}
+
+				if( shape.strokeit == true ){
+					this.ctx.lineWidth = 5;
+					this.ctx.strokeStyle = 'RGBA('+shape.rgb.r+','+shape.rgb.g+','+shape.rgb.b+',1)';
+					this.ctx.stroke();
+				}else{
+					this.ctx.fillStyle = 'RGBA('+shape.rgb.r+','+shape.rgb.g+','+shape.rgb.b+',1)';
+					this.ctx.fill();
+				}
+
+				this.ctx.beginPath();
+				//this.ctx.restore();
+			}		    
+		}
+	
+		//trace( numCompleted + "=="+ (this.plotted.length+1) );
 		if( numCompleted == (this.plotted.length+1) ){
 			trace(' num Completed has maxed');
+			this.showExport();
 			return;
 		}
-
-		trace(' - new frame - \n')
+		//trace(' - new frame - \n')
 		window.requestAnimationFrame(this.animationCycle.bind(this));
 	},
 
-	shapes : function(dat,w,h, threshold, incremental, radius, alpharan, shapetype) {
-		// determine the radius by w/h
-		var index, pixel,left, top, right, bottom = undefined;
-		var x = 0;
-		var y = 0;
-		var incrementy = Math.round(dat.width * incremental);
-		var incrementx = Math.round(dat.height * incremental);
+
+	showExport : function() {
+		// http://stackoverflow.com/questions/11206955/saving-canvas-as-a-png-or-jpg
+		var image = this.$canvas[0].toDataURL("image/png").replace("image/png", "image/octet-stream"); 
+
+		$(".export-wrapper").addClass("active");
+	    $('#export-btn')
+		    .attr({
+			    'download': 'yoursimplifiy.png',  /// set filename
+			    'href'    : image              /// set data-uri
+		     });
+	},
+
+	pixelateBkgdToSolid : function() {
+		var numCompleted = 0;
+		// we are going to individually draw the pixels by alpha of the gray scale canvas.
+		this.ctx.clearRect(0,0,this.availW, this.availH);
+		var increaseIncrementAlphaBy = 0.001;
+
+		var w = this.alphaFadeCanvas.dat.width; 
+		var h = this.alphaFadeCanvas.dat.height;
+		var data = this.alphaFadeCanvas.dat.data;
 		
-		trace(dat.width + ' ' + dat.height + ' ' + dat.data.length );
-		trace('incrementx '+ incrementy + ', incrementx '+ incrementx);
-
-		//return;
-		var r = Math.floor(dat.width * radius) / 2;
-		var rh = Math.floor(dat.height * radius) / 2;
-		if( r > rh ){
-			r = rh;
-		}
-
+		var incrementAlpha = this.incrementAlpha;
+		var bkgdCompleteProcess = 0;
+		var ratio = {w: this.availW / w, h: this.availH/h};
 		
+		for( var d = 0; d < data.length; d += 4 ){
+			// assess on a scale of 0 - 255 what the opacity should be
+			var px = d/4;
+			var x = px % w * ratio.w;
+			var y = Math.floor(px / w) * ratio.h;
+			var rectSizeW = 2 * ratio.w;
+			var rectSizeH = 2 * ratio.h;
+			
+			var maxChannel = 255 * 3;
+			var channel, originChannel;
+			
+			if( this.alphaBkgd.length >= d ){
+				channel = this.alphaBkgd[d];
+				originChannel = data[d];
+			}else{
+				originChannel = data[d];
+				channel = data[d] + 1;
 
-		for(y=0; y<dat.height; (y+=incrementy)){
-
-			for(x=0; x<dat.width; (x+=incrementx)){
-				//trace( 'x '+ x + ' , y ' + y );
-				
-				index = (x + y * dat.width) * 4;
-				
-				// get the RGB's of pixel's data
-				pixel = {
-					r     : dat.data[index], 
-					g   : dat.data[index+1], 
-					b    : dat.data[index+2],
-					a   : dat.data[index+3] 
-				};
-
-				if( pixel.a != 255 ){
-					continue;
-				}
-				
-				// Get the values of the surrounding pixels
-				// Color data is stored [r,g,b,a,r,g,b,a]
-				
-				left = {
-					r   :dat.data[index-4], 
-					g   :dat.data[index-3], 
-					b   :dat.data[index-2] 
-				};
-				
-				right = {
-					r   :dat.data[index+4], 
-					g   :dat.data[index+5],
-					b   :dat.data[index+6] 
-				};
-
-				topindex = index-(dat.width*4);
-
-				top = {
-					r   : dat.data[topindex],
-					g   : dat.data[topindex+1],
-					b   : dat.data[topindex+2]
-				};
-				
-				bottomindex = index+(dat.width*4);
-
-				bottom = {
-					r   : dat.data[bottomindex],
-					g   : dat.data[bottomindex+1],
-					b   : dat.data[bottomindex+2]
-				};
-
-				//Compare it all.
-				if(this.comparepx(pixel,left,threshold)){
-					
-				}else if(this.comparepx(pixel,right,threshold)){
-					
-				}else if(this.comparepx(pixel,top,threshold)){
-					
-				}else if(this.comparepx(pixel,bottom,threshold)){
-					
-				}else{
-					continue;
-				}
-				
-				if( shapetype == 'arc' ){
-					this.plotPixel(x,y, pixel, r, alpharan);
-				}else if( shapetype == 'fullrect'){
-					this.plotFullLengthRect(x,y, pixel, r, alpharan);
-				}else if(shapetype == 'rect' ){
-					this.plotRect(x,y, pixel, r, alpharan);
-				}
+				// trace(' not defined yet...' + originChannel + " chan " + channel );
 			}
+
+			var customIncrement = incrementAlpha * ((originChannel-125)/255);
+
+			var channelAlpha = channel + Math.abs( ((channel - originChannel)) * customIncrement);
+			var calcAlpha = (channelAlpha - originChannel) / (maxChannel - originChannel);
+			//var calcAlpha = (channelAlpha) / (maxChannel);
+
+			if( calcAlpha >= 0.99 ){
+				calcAlpha = 1;
+				bkgdCompleteProcess++;
+				channelAlpha = maxChannel;
+			}
+
+			this.alphaBkgd[d] = channelAlpha;
+				
+			//trace(d + ' data d: '+ this.alphaFadeCanvas.dat[d+2] + ' - - ' + calcAlpha + ' alpha ' + alpha);
+			//this.ctx.fillStyle="RGBA(255,100,200,0.1)";
+			this.ctx.fillStyle="RGBA("+this.colorAvg.r+","+	this.colorAvg.g+","+this.colorAvg.b+","+calcAlpha+")";
+			this.ctx.fillRect( (x - rectSizeW/2),( y - rectSizeH/2), rectSizeW , rectSizeH);
+			
+			//this.ctx.fillStyle="RGBA(25,200,100,0.4)";
+			// this.ctx.arc(x, y, 300, 0, 2 * Math.PI, false);
+			// this.ctx.fill();
+			// this.ctx.beginPath();	
+
 		}
+		this.ctx.beginPath();
+		// trace( bkgdCompleteProcess + ' / ' + (data.length / 4) );
+		if( bkgdCompleteProcess/(data.length/4) == 1 ){
+			numCompleted += 1;
+		}
+		// regardless
+		// numCompleted = 1;
+		this.incrementAlpha += increaseIncrementAlphaBy;
+
+		return numCompleted;
 	},
 
 	findHighContrastShapes : function(grayScaleCanvas) {
@@ -1051,194 +1026,6 @@ return BaseView.extend({
 		}
 
 		return shapes;
-	},
-
-	comparepx   : function(px,px2, threshold){
-		var minRGB = (255 * 3) * .15;
-		var maxRGB = (255 * 3) * .85;
-
-		if( px.r + px.g + px.b >= maxRGB ){
-			return false;
-		}else if( px.r + px.g + px.b <= minRGB ){
-			return false;
-		/*}else if( 
-			(px2.red > px.red-threshold) &&
-			(px2.green > px.green-threshold) &&
-			(px2.blue > px.blue-threshold) &&
-			(px2.red < px.red+threshold) &&
-			(px2.green > px.green+threshold) &&
-			(px2.blue > px.blue+threshold)
-		){
-		return true;*/
-		}else if(
-		(px2.r > px.r-threshold) &&
-		(px2.r < px.r+threshold)
-		){
-			// draw red
-			return true;
-		}else if(
-			(px2.g > px.g-threshold) &&
-			(px2.g < px.g+threshold)
-			){
-			// draw green
-			return true;
-		}else if(
-			(px2.b > px.b-threshold) &&
-			(px2.b < px.b+threshold)
-			){
-			// draw blue
-			return true;
-		}else{
-			return false;
-		}
-	},
-
-
-	plotRect  : function(x,y,pixel,r,alpharan) {
-		// either draw full width or horizontal
-		this.ctx.beginPath();
-		
-		var levelOfRandom = 0.05;
-		var offsetx = this.availW * levelOfRandom;
-		var offsety = this.availH * levelOfRandom;
-		var w,h;
-
-		w = r*0.5*Math.random();
-		h = r*0.5*Math.random();
-		x += (Math.random() * offsetx) - (offsetx*2);
-		y += (Math.random() * offsety) - (offsety*2);
-
-		var paddingFromEdge = 25;
-
-		if( (x + w + paddingFromEdge) > this.availW ){
-			x = this.availW - (w + paddingFromEdge)
-		}else if( x < paddingFromEdge ){
-			x = paddingFromEdge;
-		}
-
-		if( (y + h + paddingFromEdge) > this.availH ){
-			y = this.availH - (h + paddingFromEdge)
-		}else if( y < paddingFromEdge ){
-			y = paddingFromEdge;
-		}
-
-
-		var colorData = pixel;
-		var alpha = 1;
-		if( alpharan ){
-			alpha = Math.random();
-		}
-		
-		//trace('x '+x+',y '+y+' w '+ w + ' h ' + h + 'RGBA('+colorData.r+','+colorData.g+','+colorData.b+','+alpha+')' );
-
-		this.ctx.rect(x,y,w,h);
-		this.ctx.fillStyle = 'RGBA('+colorData.r+','+colorData.g+','+colorData.b+','+alpha+')';
-		this.ctx.fill();
-		
-		
-		// resets path info.
-		this.ctx.beginPath();
-		this.plotted.push({x:x,y:y, rgb: colorData, a: alpha});
-	},
-
-	plotFullLengthRect  : function(x,y,pixel,r,alpharan) {
-		// either draw full width or horizontal
-		this.ctx.beginPath();
-		
-		var levelOfRandom = 0.05;
-		var offsetx = this.availW * levelOfRandom;
-		var offsety = this.availH * levelOfRandom;
-		var w,h;
-
-		w = h = r*2.5*Math.random();
-
-
-
-		var horizon = true; //(Math.random() < 0.5 )? true : false;
-		if (horizon){
-			x = 0;
-			y += (Math.random() * offsety) - (offsety*2);
-			w = this.availW;
-		}else{
-			y = 0;
-			x += (Math.random() * offsetx) - (offsetx*2);
-			h = this.availH;
-		}
-
-		var colorData = pixel;
-		var alpha = 1;
-		if( alpharan ){
-			alpha = Math.random();
-		}
-		
-		trace('x '+x+',y '+y+' w '+ w + ' h ' + h + 'RGBA('+colorData.r+','+colorData.g+','+colorData.b+','+alpha+')' );
-
-		this.ctx.rect(x,y,w,h);
-		this.ctx.fillStyle = 'RGBA('+colorData.r+','+colorData.g+','+colorData.b+','+alpha+')';
-		this.ctx.fill();
-		
-		
-		// resets path info.
-		this.ctx.beginPath();
-		this.plotted.push({x:x,y:y, rgb: colorData, a: alpha});
-	},
-
-	plotPixel  : function(x,y,pixel,r,alpharan) {
-		this.ctx.beginPath();
-		
-		var levelOfRandom = 0.2;
-		var offsetx = this.availW * levelOfRandom;
-		var offsety = this.availH * levelOfRandom;
-		var radius = r*2.5*Math.random();
-
-		x += (Math.random() * offsetx) - (offsetx/2);
-		y += (Math.random() * offsety) - (offsety/2);
-
-
-		var paddingFromEdge = 25;
-
-		if( (x + radius + paddingFromEdge) > this.availW ){
-			x = this.availW - (radius + paddingFromEdge)
-		}else if( (x - radius) < paddingFromEdge ){
-			x = paddingFromEdge + radius;
-		}
-
-		if( (y + radius + paddingFromEdge) > this.availH ){
-			y = this.availH - (radius + paddingFromEdge)
-		}else if( (y - radius) < paddingFromEdge ){
-			y = paddingFromEdge + radius;
-		}
-
-
-
-		this.ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
-		//this.ctx.arc(x, y, r*Math.random(), 0, 2 * Math.PI, false);
-
-		var colorData = pixel;
-		var alpha = 1;
-		if( alpharan ){
-			alpha = Math.random();
-		}
-		
-
-		this.ctx.fillStyle = 'RGBA('+colorData.r+','+colorData.g+','+colorData.b+','+alpha+')';
-		this.ctx.fill();
-		
-		// resets path info.
-		this.ctx.beginPath();
-		this.plotted.push({x:x,y:y, rgb: colorData, a: alpha});
-	},
-
-	plotPoint  : function(x,y) {
-		this.ctx.beginPath();
-		this.ctx.arc(x, y, 20, 0, 2 * Math.PI, false);
-
-		var colorData = this.getPixelRGB(x,y,this.hiddenctx,false);
-
-		this.ctx.fillStyle = 'RGB('+colorData.r+','+colorData.g+','+colorData.b+')';
-		this.ctx.fill();
-		// resets path info.
-		this.ctx.beginPath();
 	},
 
 	clearCanvas : function() {
@@ -1281,13 +1068,8 @@ return BaseView.extend({
 			w = mW;
 		}
 
-
 		// make it a square
 		h = w;
-
-		// if( h > mH ){
-		// 	h = mH;
-		// }
 
 		this.availH = h;
 		this.availW = w;
