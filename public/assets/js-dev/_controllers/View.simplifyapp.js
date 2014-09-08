@@ -67,7 +67,7 @@ return BaseView.extend({
 
 	// test switches
 	devswitches         : {
-							test : true,
+							test : false,
 							// show object deteciton mapping:
 							showMapping         : false,
 							// do the object detection logic.
