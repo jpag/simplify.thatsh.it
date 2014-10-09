@@ -1,16 +1,41 @@
+@media screen and (max-width: $breakpt-med) {
+.footer {
+	.footer-content {
+	}
+	a {
+		width: 25%;
+	}
+	.universal, .huge, .site, .email {
+		width: 20%;
+		margin: 2.5%;
+	}
+
+}
+
+}
+
 @media screen and (max-width: $breakpt-sml) {
 
 .footer {
-	padding-bottom: 20px;
 	height: auto;
 	overflow: hidden;
-	a {
-		height: 40px;
-		float: none;
-		padding: 10px 0px;
-		margin: 0px 10%;
+	.footer-content {
+		height: auto;
 		display: block;
-		width: 80%;
+	}
+	a {
+		&.universal, &.huge, &.site, &.email {
+			height: 40px;
+			float: none;
+			padding: 10px 0px;
+			margin: 0px 10%;
+			display: block;
+			width: 80%;
+			max-width: 275px;
+			margin: auto;
+			position: relative;
+			margin-bottom: 44px;
+		}
 	}
 }
 

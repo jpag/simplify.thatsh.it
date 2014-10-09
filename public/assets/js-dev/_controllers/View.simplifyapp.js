@@ -34,7 +34,7 @@ return BaseView.extend({
 	_Template   : null,
 	id          : 'simplifyapp',
 
-	hiddenctx   : null,
+	originctx   : null,
 	ctx         : null,
 	imgsrc      : null,
 
@@ -68,7 +68,7 @@ return BaseView.extend({
 	// test switches
 	devswitches         : {
 							test : false,
-							// show object deteciton mapping:
+							// show object detection fixed canvas map in the corner:
 							showMapping         : false,
 							// do the object detection logic.
 							objectDetect        : true,
@@ -82,6 +82,18 @@ return BaseView.extend({
 	testImage : 0,
 	bkgdalpha : 0,
 
+	// shape switches
+	keepWithinCanvasEdge : true,
+
+	previousStroked : false,
+	previousRotateDirection : 1,
+	previousPolyOrArc : 'polygon',
+	arcSizes : [
+		Math.PI, 2 * Math.PI
+	],
+	nextArcSize : 0,
+	devcanvas : null,
+	devctx : null,
 	animating : false,
 
 	init : function() {
@@ -93,7 +105,18 @@ return BaseView.extend({
 
 		this.$canvas = this.$el.find("#visible-canvas");
 		this.ctx = this.$el.find("#visible-canvas")[0].getContext('2d');
-		this.hiddenctx = this.$el.find("#origin-hidden-canvas")[0].getContext('2d');
+		this.originctx = this.$el.find("#origin-canvas")[0].getContext('2d');
+
+		if( this.devswitches.showMapping == true ){
+
+			this.devcanvas = $("<canvas id='debug-canvas' width='300' height='300' />", {
+				id : "debug-canvas",
+				width: 300,
+				height: 300
+			}).appendTo("body");
+
+			this.devctx = this.devcanvas[0].getContext('2d');
+		}
 
 	},
 
@@ -214,9 +237,14 @@ return BaseView.extend({
 		this.imgOffset.h = h;
 
 		this.ctx.drawImage(this.imgsrc,x,y,w,h);
-		this.hiddenctx.drawImage(this.imgsrc,x,y,w ,h );
+		this.originctx.drawImage(this.imgsrc,x,y,w ,h );
 		
+		if( this.devswitches.showMapping == true ){
+			this.devctx.drawImage(this.imgsrc,x/2,y/2,w/2,h/2);
+		}
+
 		trace('\n\n');
+		
 		var self = this;
 		setTimeout(function(){
 			self.drawEverything();
@@ -232,7 +260,7 @@ return BaseView.extend({
 			trace(' ERRROR shape is 0x0')
 			return;
 		}
-		var dat = this.hiddenctx.getImageData(0,0,w,h);
+		var dat = this.originctx.getImageData(0,0,w,h);
 		trace('Shape data wxh len ' + dat.width + ' ' + dat.height + ' ' + dat.data.length + '\n----');
 
 		//empty it!
@@ -277,7 +305,7 @@ return BaseView.extend({
 		var tw = Math.ceil(w * downscale);
 		var th = Math.ceil(h * downscale);
 		var contrastLevel = 255/2;
-		var hiddencanvas = this.$el.find("#origin-hidden-canvas")[0];
+		var hiddencanvas = this.$el.find("#origin-canvas")[0];
 
 		var maxAreaPerShape =  Math.floor( (tw * 0.1) * (th * 0.1) );
 
@@ -304,9 +332,13 @@ return BaseView.extend({
 	  	grayScaleCanvas.ctx.putImageData(grayScaleCanvas.dat,0,0);
 
 	 	if( showMapping == true ){
-			this.ctx.drawImage( grayScaleCanvas.cv, 0,0, w, h);
+			//this.ctx.drawImage( grayScaleCanvas.cv, 0,0, w, h);
 			// grayScaleCanvas.ctx.drawImage( this.$canvas[0], 0,0, w, h);
 			// grayScaleCanvas.dat = grayScaleCanvas.ctx.getImageData(0,0,w,h);
+			
+			// this.devctx.globalAlpha = 0.75;
+			// this.devctx.drawImage( grayScaleCanvas.cv, 0,0, w/2, h/2);
+			// this.devctx.globalAlpha = 1;
 		}
 		
 		var shapes = this.findHighContrastShapes(grayScaleCanvas);
@@ -323,7 +355,7 @@ return BaseView.extend({
 		
 		if( showMapping == true ){
 			for( var s = 0; s < shapes.length ; s++){
-				this.drawRect(shapes[s][0]/downscale,shapes[s][1]/downscale, {r: 222, g: 250, b: 5, a: 0.75}, this.ctx, 20, 20 );
+				this.drawRect( (shapes[s][0]/downscale)/2,(shapes[s][1]/downscale)/2, {r: 222, g: 250, b: 5, a: 0.75}, this.devctx, 10, 10 , 2);
 			}
 		}    
 
@@ -540,13 +572,13 @@ return BaseView.extend({
 			// trace(shapes[s]);
 			
 			if( showMapping == true ){
-				this.drawRect(sx,sy, {
-					r: 250, 
-					g: 240, 
+				this.drawRect(sx/2,sy/2, {
+					r: 50, 
+					g: 140, 
 					b: 255, 
 					a: 0.5
 				}, 
-				this.ctx, sw, sh );
+				this.devctx, sw/2, sh/2, 2 );
 			}
 
 			if( sw * sh >= maxSurfaceArea ){
@@ -560,50 +592,66 @@ return BaseView.extend({
 		return shapesreturn;
 	},
 
-	drawRect : function(x,y,c,ctx,sizew, sizeh) {
+	drawRect : function(x,y,c,ctx,sizew, sizeh, strokesize) {
 		ctx.fillStyle="RGBA("+c.r+","+c.g+","+c.b+","+c.a+")";
 		ctx.fillRect(x,y,sizew,sizeh);
+
+		if( strokesize > 0 ){
+			ctx.strokesize = strokesize;
+			ctx.strokeStyle = "RGBA(255,50,50,0.5)";
+			ctx.strokeRect(x, y, sizew, sizeh);
+
+		}
+		ctx.beginPath();
 	},
 
-	drawAvgColor : function(dat,ctx, ran){
+	drawAvgColor : function(dat,ctx){
 		var red = 0, blue = 0, green = 0;
 		var alpha = 1;
 		var divisible = (dat.data.length/4);
 
-		if(typeof(ran) !== 'undefined' ){
-			var range = dat.width * dat.height;
-			divisible = ran;
-
-			for( var i=0; i < ran; i++){
-				var r = Math.round( Math.random() * range ) * 4;
-
-				red += dat.data[r];
-				green += dat.data[r+1];
-				blue += dat.data[r+2];
+		for( var i=0; i < dat.data.length; i+=4){
+			if( dat.data[i+3] != 255 ){
+				continue;
 			}
-		}else{
-			for( var i=0; i < dat.data.length; i+=4){
-				if( dat.data[i+3] != 255 ){
-					continue;
-				}
-
-				red += dat.data[i];
-				green += dat.data[i+1];
-				blue += dat.data[i+2];
-			}
+			red += dat.data[i];
+			green += dat.data[i+1];
+			blue += dat.data[i+2];
 		}
-
-		
 
 		red = Math.round(red / divisible);
 		green = Math.round(green / divisible);
 		blue = Math.round(blue / divisible);
 
 		trace( "----\n Avg Bkgd Color found: RGBA("+red+","+green+","+blue+","+alpha+") \n----\n");
-		ctx.fillStyle="RGBA("+red+","+green+","+blue+","+alpha+")";
-		ctx.fillRect(0,0,this.availW,this.availH);
+		//var contrast = this.contrast({data:[red,green,blue,alpha]}, 105);
+		// red = Math.round(contrast.data[0]);
+		// green = Math.round(contrast.data[1]);
+		// blue = Math.round(contrast.data[2]);
+		
+		var shader = this.shadeColor1({data:[red,green,blue,alpha]}, 60);
+		if( shader.r == 255 && shader.g == 255 && shader.b == 255 ){
+			// will be white and too bright...?
+		}else{
+			red = shader.r;
+			green = shader.g;
+			blue = shader.b;
+		}
+		trace( "----\n Avg Bkgd Color Contrast: RGBA("+red+","+green+","+blue+","+alpha+") \n----\n");
+		
+		this.colorAvg = {r: red, g: green, b: blue, a: alpha};	
+	},
 
-		this.colorAvg = {r: red, g: green, b: blue, a: alpha};
+	shadeColor1: function(dat, percent) {  
+	    var R = dat.data[0] * (100 + percent) / 100;
+	    var G = dat.data[1] * (100 + percent) / 100;
+	    var B = dat.data[2] * (100 + percent) / 100;
+
+	    R = (R<255)?R:255;
+	    G = (G<255)?G:255;
+	    B = (B<255)?B:255;
+
+	    return {r: Math.round(R), g: Math.round(G), b:Math.round(B)};
 	},
 
 	contrast : function(dat, contrast){
@@ -617,6 +665,8 @@ return BaseView.extend({
 		return dat;
 	},
 
+	// this actually just tells us where the shapes should go
+	// there is an animate loop that will actually draw them.
 	drawDefinedObjects : function(shapes) {
 		this.plotted = [];
 
@@ -625,36 +675,61 @@ return BaseView.extend({
 			var shape = shapes[s];
 			var x = shape.x;
 			var y = shape.y;
-			var r = ( (shape.w > shape.h)? shape.w : shape.h )/2;
+			var r = Math.round( ( (shape.w > shape.h)? shape.w : shape.h )/2);
 			var alpha = 1;
 			var type = 'rect'; // circle
 			var maxPercent = 0.35;
 			var faces = 0;
-			var strokeit = (Math.random() > 0.75 )? true : false;
-
-			// if( r > (this.availW * maxPercent) || r > (this.availH * maxPercent) ){
-			// 	type = 'rect';
-			// } 
+			var strokeit = (this.previousStroked == false )? true : false;
+			// for arcs only how far does it go:
+			var amountOfPi = 2 * Math.PI;
+			
+			if( !this.previousStroked){
+				this.previousStroked = true;	
+			}else{
+				this.previousStroked =false;
+			}
 
 			if( Math.abs(shape.iw - shape.ih) <= 1 ){
 				 
-				 /*if( Math.random() > 0.4 ){
+				if( this.previousPolyOrArc == 'polygon' ){
 				 	type = 'arc';	
-				 }else{
-				 	*/
+				 	this.previousPolyOrArc = 'arc';
+
+				}else{
 				 	type = 'polygon';
 				 	faces = Math.round(Math.random() * 3) + 3;
 				 	
 				 	if( faces == 4 ){
 				 		faces--;
 				 	}
-				 //}
+					
+					this.previousPolyOrArc = 'polygon';
+				}
 			}else if(
 				(shape.ih == 1 && shape.iw >= 1) ||
 				(shape.iw == 1 && shape.ih >= 1) ||
 				(Math.round() > 0.75)
 			){
 				type = 'line';
+			}else if( shape.iw == shape.ih ){
+			 	type = 'arc';
+			 	faces = Math.round( Math.random() * 8) + 3;
+			 	this.previousPolyOrArc = 'arc';
+			 	strokeit = true;
+			 	r = shape.h = shape.w = Math.round( Math.random() * ((Math.random() * 300) + 5) + 30 );
+			 	amountOfPi = Math.PI * .75;
+
+			 	// has there been a line? no make one!
+			 	var numlines = 0;
+			 	for( var p=0; p < this.plotted.length; p++){
+			 		if( this.plotted[p].type == 'line' ){
+			 			numlines++;
+			 		}
+			 	}
+			 	if( numlines < 3 ){
+			 		type = 'line';
+			 	}
 			}
 
 			//trace(' type ' + type + " shape.iw " + shape.iw + " shape.ih " + shape.ih );
@@ -673,49 +748,56 @@ return BaseView.extend({
 				cpx = x;
 				cpy = y;
 
-				if( x+r+edgePadding >= this.availW ){
-					x = this.availW - (r + edgePadding);
-				}else if( x - r <= edgePadding ) {
-					x = r + edgePadding;
+				if( this.keepWithinCanvasEdge == true ){
+					if( x+r+edgePadding >= this.availW ){
+						x = this.availW - (r + edgePadding);
+					}else if( x - r <= edgePadding ) {
+						x = r + edgePadding;
+					}
+
+					if( y+r+edgePadding >= this.availH ){
+						y = this.availH - (r + edgePadding);
+					}else if( y - r <= edgePadding ){
+						y = r + edgePadding;
+					}
 				}
 
-				if( y+r+edgePadding >= this.availH ){
-					y = this.availH - (r + edgePadding);
-				}else if( y - r <= edgePadding ){
-					y = r + edgePadding;
+				if( type == 'arc' && shape.iw == shape.ih ){
+					amountOfPi = this.arcSizes[this.nextArcSize];
+					this.nextArcSize++
+					if( this.nextArcSize >= this.arcSizes.length ){
+						this.nextArcSize = 0;
+					}
+				}else{
+					amountOfPi = Math.PI * 2
+					strokeit = false;
 				}
 
 			}else if( type == 'rect' || type == 'line' ){
 				// define point BEFORE we reposition because of the edge:
 				cpx = x + shape.w/2;
 				cpy = y + shape.h/2;
+				
+				if( this.keepWithinCanvasEdge == true ){
+					if( x+shape.w+edgePadding >= this.availW ){
+						x = this.availW - (shape.w + edgePadding);
+					}else if( x <= edgePadding ){
+						x = edgePadding;
+					}
 
-				if( x+shape.w+edgePadding >= this.availW ){
-					x = this.availW - (shape.w + edgePadding);
-				}else if( x <= edgePadding ){
-					x = edgePadding;
+					if( y+shape.h+edgePadding >= this.availH ){
+						y = this.availH - (shape.h + edgePadding);
+					}else if( y <= edgePadding ){
+						y = edgePadding;
+					}
 				}
 
-				if( y+shape.h+edgePadding >= this.availH ){
-					y = this.availH - (shape.h + edgePadding);
-				}else if( y <= edgePadding ){
-					y = edgePadding;
-				}
 			}else if( type == 'line' ){
-				cpx = x + shape.w/2;
-				cpy = y + shape.h/2;
-
-
+				cpx = x;// + shape.w/2;
+				cpy = y;// + shape.h/2;
 			}
 
-			if( this.devswitches.showMapping == true){
-				alpha = 0.55;
-				test = true;
-			}else{
-				test = false;
-			}
-
-			var colorData = this.getPixelRGB( cpx, cpy, this.hiddenctx , test);
+			var colorData = this.getPixelRGB( cpx, cpy, this.originctx , false);
 			var cur, dest;
 
 			var increment = Math.random() * 0.1;
@@ -729,13 +811,27 @@ return BaseView.extend({
 				if( type == 'rect' ){
 					dest = [shape.w,shape.h];
 					cur = [0,0];
+					strokeit = false;
 				}else if( type == 'arc' || type == 'polygon' ){
 					cur = [0,0];
 					dest = [r,r];
 				}else if( type == 'line' ){
 					cur = [0,0];
-					dest = [shape.w, shape.h];
+					var lineRange = shape.w * 2.5
+					var endx = 0;//Math.round( (Math.random() * lineRange) - lineRange/2 ) 
+					var endy = shape.h * 2;
+					if( Math.random() < 0.5 ){
+						endx = shape.w * 2;
+						endy = 0;
+					}
+					dest = [endx, endy];
 				}
+			}
+
+			var rotateIncrement = Math.random() * .2;
+			var lineWidth = Math.random() * 10;
+			if( lineWidth < 3 ){
+				lineWidth = 3;
 			}
 
 			this.plotted.push({x:x,y:y, rgb: colorData, a: alpha, 
@@ -745,11 +841,16 @@ return BaseView.extend({
 								increment: increment, 
 								faces: faces,
 								strokeit : strokeit,
-								rotation : 0,
-								rotateIncrement : (Math.random() > 0.5)? -0.01 : 0.01
+								rotation : Math.random() * (2* Math.PI),
+								rotateIncrement : (this.previousRotateDirection > 0 )? (-1 * rotateIncrement) : rotateIncrement,
+								amountOfPi : amountOfPi,
+								currentAmountOfPi : 0.01,
+								lineWidth : lineWidth,
+								clockwise : (Math.random() > 0.5)? true : false
 							});
 
-			trace(s + ' shape type ' + type );
+			this.previousRotateDirection = this.previousRotateDirection * -1;
+			trace(s + ' shape type ' + type + '  - ' + amountOfPi );
 		}
 
 		if( this.devswitches.animate == true ){
@@ -788,7 +889,6 @@ return BaseView.extend({
 		if( animatebkgd == true && this.alphaFadeCanvas != null){
 			numCompleted = this.pixelateBkgdToSolid();
 		}else{
-
 			this.bkgdalpha = this.bkgdalpha + (Math.abs(this.bkgdalpha - 1) * 0.03);
 			if( this.bkgdalpha >= 0.99 ) {
 				this.bkgdalpha = 1;
@@ -805,6 +905,7 @@ return BaseView.extend({
 			var x = shape.x;
 			var y = shape.y;
 			var incremental = shape.increment;
+			var lineWidth = shape.lineWidth;
 
 			this.ctx.fillStyle = 'RGBA('+shape.rgb.r+','+shape.rgb.g+','+shape.rgb.b+',1)';
 			
@@ -830,12 +931,19 @@ return BaseView.extend({
 				
 				if( shape.type == 'line' ){
 					
-					this.ctx.moveTo(x,y);
-					this.ctx.lineTo(x+newW,y+newH);
-					this.ctx.lineWidth = 5;
+					shape.rotation = (shape.rotation + shape.rotateIncrement) * 0.65;
+					this.ctx.save(); // saves the coordinate system
+					this.ctx.translate(x,y); // now the position (0,0) is found at (250,50)
+					this.ctx.rotate(shape.rotation); // rotate around the start point of your line
+
+					//this.ctx.moveTo(x,y);
+					this.ctx.moveTo(0,0);
+					this.ctx.lineTo(newW,newH);
+					this.ctx.lineWidth = lineWidth;
 					this.ctx.strokeStyle = 'RGBA('+shape.rgb.r+','+shape.rgb.g+','+shape.rgb.b+',1)';
 					this.ctx.stroke();
 
+					this.ctx.restore();
 				}else{
 					if( shape.strokeit == true ){
 						this.ctx.strokeRect(x, y, newW, newH);
@@ -852,19 +960,18 @@ return BaseView.extend({
 
 				var newR = shape.current[0] + Math.abs((shape.current[0] - shape.destination[0]) * incremental);
 				if( newR >= (shape.destination[0] - snapRange) ){
-					newR = shape.destination[0];
-					numCompleted += 1;
+						newR = shape.destination[0];
 				}
-
 				shape.current[0] = newR;	
-				
-				if( shape.type == 'polygon' ){
-					
-					shape.rotation = (shape.rotation + shape.rotateIncrement) * 0.97;
-					this.ctx.save(); // saves the coordinate system
-					this.ctx.translate(x,y); // now the position (0,0) is found at (250,50)
-					this.ctx.rotate(shape.rotation); // rotate around the start point of your line
+				shape.rotation = (shape.rotation + shape.rotateIncrement) * 0.97;
+				this.ctx.save(); // saves the coordinate system
+				this.ctx.translate(x,y); // now the position (0,0) is found at (250,50)
+				this.ctx.rotate(shape.rotation); // rotate around the start point of your line
 
+				if( shape.type == 'polygon' ){
+					if( newR == shape.destination[0]){
+						numCompleted += 1;
+					}	
 					//http://scienceprimer.com/drawing-regular-polygons-javascript-canvas
 					var numberOfSides = shape.faces,
 						size = newR,
@@ -880,14 +987,34 @@ return BaseView.extend({
 						this.ctx.lineTo(linetoX, linetoY);
 					}
 
-					this.ctx.restore();
+					this.ctx.closePath();
 
 				}else{
-					this.ctx.arc(x, y, newR, 0, 2 * Math.PI, false);
+					if( shape.strokeit ){
+						shape.currentAmountOfPi += (shape.amountOfPi - shape.currentAmountOfPi) * 0.99;
+					}else{
+						shape.currentAmountOfPi = shape.amountOfPi;
+					}
+
+					if( newR == shape.destination[0]){
+						var dif = Math.abs(shape.currentAmountOfPi - (shape.amountOfPi));
+						if( dif <= 0.25 ){ 
+							numCompleted += 1;
+							shape.currentAmountOfPi = shape.amountOfPi;
+
+							trace(' completed ---');
+						}else{
+							trace( ' dif of pi ' + dif )
+						}
+					}	
+					trace( newR + ' rv ' + shape.destination[0] + ' ' + shape.currentAmountOfPi + ' vs ' + shape.amountOfPi );
+					this.ctx.arc(0, 0, newR, 0, shape.currentAmountOfPi, shape.clockwise);
 				}
+				
+				this.ctx.restore();
 
 				if( shape.strokeit == true ){
-					this.ctx.lineWidth = 5;
+					this.ctx.lineWidth = lineWidth;
 					this.ctx.strokeStyle = 'RGBA('+shape.rgb.r+','+shape.rgb.g+','+shape.rgb.b+',1)';
 					this.ctx.stroke();
 				}else{
@@ -900,7 +1027,7 @@ return BaseView.extend({
 			}		    
 		}
 	
-		//trace( numCompleted + "=="+ (this.plotted.length+1) );
+		trace( numCompleted + "=="+ (this.plotted.length+1) );
 		if( numCompleted == (this.plotted.length+1) ){
 			trace(' num Completed has maxed');
 			this.showExport();
@@ -918,7 +1045,7 @@ return BaseView.extend({
 		$(".export-wrapper").addClass("active");
 	    $('#export-btn')
 		    .attr({
-			    'download': 'yoursimplifiy.png',  /// set filename
+			    'download': 'simplifythatshit.png',  /// set filename
 			    'href'    : image              /// set data-uri
 		     });
 	},
@@ -1031,7 +1158,10 @@ return BaseView.extend({
 	clearCanvas : function() {
 		trace(' ---- clear canvas - ');
 		this.ctx.clearRect(0,0,this.availW, this.availH);
-		this.hiddenctx.clearRect(0,0,this.availW,this.availH);
+		this.originctx.clearRect(0,0,this.availW,this.availH);
+		if( this.devctx != null ){
+			this.devctx.clearRect(0,0,this.availW,this.availH);
+		}
 	},
 
 	redrawCanvas : function() {

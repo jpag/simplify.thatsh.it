@@ -8,7 +8,7 @@
 	margin: auto;
 	max-width: 600px;
 	min-height: 600px;
-	margin-bottom: 100px;
+	// margin-bottom: 100px;
 }
 
 canvas {
@@ -27,7 +27,7 @@ canvas {
 }
 
 
-#origin-hidden-canvas {
+#origin-canvas {
 
 }
 
@@ -66,16 +66,27 @@ canvas {
 
 #banner-bar {
 	position: relative;
-	margin: 0px;
-	padding: 20px 0px;
+	margin: 88px 0px;
+	padding: 88px 0px;
 	width: 100%;
 	background: #000;
 	background-image: url("../imgs/ui/chevron-banner.svg");
 	background-position: 50% 0%;
 	background-size: 230px auto;
 	background-repeat: no-repeat;
+	// min-height: 400px;
 
-	min-height: 400px;
+	.artist-statement {
+		background-image: url("../imgs/ui/artist-statement.svg");
+		width: 100%;
+		height: 16px;
+		position: relative;
+		display: block;
+		background-size: contain;
+		background-position: 50%;
+		background-repeat: no-repeat;
+		text-indent: -5000px;
+	}
 
 	p {
 		color: #fff;
@@ -83,8 +94,25 @@ canvas {
 	}
 
 	a {
-		color: #fa0058;
+		//color: #fa0058;
+		&.jen {
+			color: #cfff8a;
+			&:active,
+			&:hover {
+				color: #cfff8a;
+				text-decoration: underline;
+			}
+		}
+		&.tim {
+			color: #8ac4ff;
+			&:active,
+			&:hover {
+				color: #8ac4ff;
+				text-decoration: underline;
+			}
+		}
 	}
+
 	ul {
 		overflow: hidden;
 		width: 100%;
@@ -112,6 +140,107 @@ canvas {
 		}
 	}
 }
+
+
+.gallery-wrapper {
+	p {
+		padding-top: 0px;
+		margin-top: 0px;
+		padding-bottom: 88px;
+		margin-bottom: 0px;
+		a {
+			color: #ff854b;
+			&:hover {
+				text-decoration: underline;
+			}
+		}
+	}	
+
+	ul {
+		width: 810px;
+		margin: auto;
+		position: relative;
+		display: block;
+		font-size: 0px;
+
+		li {
+			display: inline-block;
+			position: relative;
+			width: $listSize/3;
+			height: auto;
+			margin: 0px;
+			font-size: 0px;
+			text-align: center;
+			margin-bottom: 88px;
+			vertical-align: top;
+			height: 430px;
+
+			@include borderBox;
+
+			h3 {
+				font-family: 'FuturaStd-ExtraBold', Arial, sans-serif;
+				color: #000;
+				font-size: 18px;
+				padding-top: 35px;
+			}
+			h4 {
+				font-size: 12px;
+				color: #000;
+			}
+			p {
+				color: #8f8f8f;
+				font-size: 12px;
+				position: absolute;
+				bottom: 0px;
+				width: 100%;
+			}
+
+			.img {
+				@include borderBox;
+				border: 1px solid #fff;
+				width: $listSize/3;
+				height: $listSize/3;
+				background-position: 50%;
+				background-size: contain;
+				background-repeat: no-repeat;
+				@include animate-default(all, 150ms);
+				$transform: perspective(500px) translate3d(0px, 0px, 0px);
+				-webkit-transform: $transform;
+				transform: $transform;
+			}
+			p {
+				padding: 0px;
+			}
+
+			&:hover {
+				.img {
+					$transform: perspective(500px) translate3d(0px, 0px, -15px);
+					-webkit-transform: $transform;
+					transform: $transform;
+				}
+				h3 {
+					//color: #444;
+				}
+			}
+		}
+	}
+}
+
+
+
+#debug-canvas {
+	width: 300px;
+	height: 300px;
+	position: fixed;
+	bottom: 0px;
+	right: 0px;
+	z-index: 999;
+	background-color: #333;
+	left: auto;
+	top: auto;
+	border: 1px solid #ccc;
+}
+
 
 @import "app.med";
 @import "app.sml";

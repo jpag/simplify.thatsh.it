@@ -113,7 +113,7 @@ shapes : function(dat,w,h, threshold, incremental, radius, alpharan, shapetype) 
         var shrinkCan = {}
         var tw = 1; //this.availW * 0.01;
         var th = 1; //this.availH * 0.01;
-        var hiddencanvas = this.$el.find("#origin-hidden-canvas")[0];
+        var hiddencanvas = this.$el.find("#origin-canvas")[0];
         shrinkCan.cv = document.createElement('canvas');
         shrinkCan.cv.width = tw;
         shrinkCan.cv.height = th;
@@ -342,7 +342,7 @@ shapes : function(dat,w,h, threshold, incremental, radius, alpharan, shapetype) 
             
         // paper has some problems with the default data.
         // http://greenethumb.com/article/1429/user-friendly-image-saving-from-the-canvas/
-        var dat = this.$el.find("#origin-hidden-canvas")[0].toDataURL("image/png");
+        var dat = this.$el.find("#origin-canvas")[0].toDataURL("image/png");
         this.raster = new paper.Raster({
             source: dat
         });
@@ -605,7 +605,7 @@ shapes : function(dat,w,h, threshold, incremental, radius, alpharan, shapetype) 
         this.ctx.beginPath();
         this.ctx.arc(x, y, 20, 0, 2 * Math.PI, false);
 
-        var colorData = this.getPixelRGB(x,y,this.hiddenctx,false);
+        var colorData = this.getPixelRGB(x,y,this.originctx,false);
 
         this.ctx.fillStyle = 'RGB('+colorData.r+','+colorData.g+','+colorData.b+')';
         this.ctx.fill();

@@ -1,3 +1,15 @@
+@font-face {
+    font-family: 'FuturaStd-ExtraBold';
+    src: url('../fonts/futura/FuturaStd-ExtraBold.eot');
+}
+
+@font-face {
+    font-family: 'FuturaStd-ExtraBold';
+    src: url('../fonts/futura/FuturaStd-ExtraBold.woff') format('woff'),
+    url('../fonts/futura/FuturaStd-ExtraBold.svg#FuturaStd-ExtraBold') format('svg');
+}
+
+
 @mixin font-light ( $size: 18px, $color : #333333 ){
 	font-family: 'HelveticaNeue-Light', Arial, Tahoma, sans-serif;
 	font-size: $size;
@@ -63,4 +75,5 @@ p {
   margin: auto;
   position: relative;
 }
+
 
