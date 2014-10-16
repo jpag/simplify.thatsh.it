@@ -1,6 +1,4 @@
-.app {
-
-}
+.app { }
 
 #simplifyapp {
 	width: 100%;
@@ -8,7 +6,6 @@
 	margin: auto;
 	max-width: 600px;
 	min-height: 600px;
-	// margin-bottom: 100px;
 }
 
 canvas {
@@ -19,24 +16,19 @@ canvas {
 	margin: auto;
 	background: RGBA(255,255,255,0);
 	background: transparent;
-	
 	@include borderBox;
-
 	width: 100%;
 	height: 100%;
 }
 
 
-#origin-canvas {
-
-}
+#origin-canvas { }
 
 #visible-canvas {
 	border: 1px solid #333;
 }
 
 #simplifyapp {
-
 	&.empty {
 		#visible-canvas {
 			border: 3px dashed #333;
@@ -74,8 +66,7 @@ canvas {
 	background-position: 50% 0%;
 	background-size: 230px auto;
 	background-repeat: no-repeat;
-	// min-height: 400px;
-
+	
 	.artist-statement {
 		background-image: url("../imgs/ui/artist-statement.svg");
 		width: 100%;
@@ -94,7 +85,6 @@ canvas {
 	}
 
 	a {
-		//color: #fa0058;
 		&.jen {
 			color: #cfff8a;
 			&:active,
@@ -174,7 +164,6 @@ canvas {
 			margin-bottom: 88px;
 			vertical-align: top;
 			height: 430px;
-
 			@include borderBox;
 
 			h3 {
@@ -218,9 +207,7 @@ canvas {
 					-webkit-transform: $transform;
 					transform: $transform;
 				}
-				h3 {
-					//color: #444;
-				}
+				h3 { }
 			}
 		}
 	}

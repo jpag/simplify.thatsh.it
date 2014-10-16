@@ -5,17 +5,12 @@
 	}
 
 	#simplifyapp.empty {
-
 		#visible-canvas {
-			// border: none;
-			// background-image: none;
-			// background-size: 50px auto;
 			background-size: contain;
 		}
 	}
 
 	#banner-bar {
-
 		ul {
 			li {
 				float: none;
@@ -31,9 +26,10 @@
 	ul {
 		width: 90%;
 		margin: auto;
-		
 		li {
 			width: 90%;
+			margin-left: auto;
+			margin-right: auto;
 			display: block;
 			height: auto;
 			

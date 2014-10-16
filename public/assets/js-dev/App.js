@@ -130,6 +130,10 @@ require([
 				$("#simplifyapp").addClass('touchdevice');
 				// will not support drag and drop file uploading etc.
 				$("body").addClass('touchdevice');
+
+				$(".cta-ok.btn").bind({
+					"click" : this.closeModial.bind(this)
+				})
 			}
 
 			//require(['AppComposite'],function(_composite){
@@ -143,6 +147,10 @@ require([
 			this._super();
 			$(window).resize(this.windowResizeDispatcher.bind(this));
 			this.$doc.on(Events.dom.forceResize, this.windowResizeDispatcher.bind(this));
+		},
+
+		closeModial : function(e) {
+			$(".overlay").addClass("close");
 		},
 
 		/*

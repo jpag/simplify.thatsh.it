@@ -1,3 +1,16 @@
+<?php
+    // GLOBAL vars. Get the domain name:
+    $SERVERNAME = $_SERVER['SERVER_NAME'];  
+    $SITENAME = 'SIMPLIFY.THATSH.IT';
+    $DESCRIPTION = "http://simplify.thatsh.it creates modern art by simplifying images to their core elements. #SimplifyThatShit";
+    $KEYWORDS = "SIMPLIFY.THATSH.IT simplify that shit canvas html5 abstraction art tim nolan jen lu";
+
+
+    $JSFOLDER = "js";
+    if(strpos($_SERVER['HTTP_HOST'],'local') !== false) $JSFOLDER = "js-dev"; else $JSFOLDER = "js";
+    
+?>
+
 <!doctype html>
 <!--[if lt IE 7 ]>
   <html lang="en" class="ie ie6">
@@ -19,27 +32,33 @@
     <link rel="shortcut icon" href="assets/imgs/favicon.ico">
     <meta http-equiv="cleartype" content="on"></meta>
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"></meta>
-
     <!-- Styles -->
     <link rel="stylesheet" data-type="globalcss" type="text/css" href="assets/css/global.css">
-
-
     <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
     
-    
-<!-- FILL IN THE SEO -->
-    <title>Simplify it</title>
+<!-- SEO -->
+    <title><?php echo $SITENAME; ?></title>
     <!-- Content Meta -->
-    <meta name="description" content="http://simplify.thatsh.it creates modern art by simplifying images to their core elements. #SimplifyThatShit">
-    <meta name="keywords" content="SIMPLIFY.THATSH.IT simplify that shit canvas html5 abstraction art tim nolan jen lu">
+    <meta name="description" content="<?php echo $DESCRIPTION;?>">
+    <meta name="keywords" content="<?php echo $KEYWORDS ?>">
     <!-- Share Meta -->
     <meta property="fb:app_id" content="">
-    <meta property="og:type" content="">
-    <meta property="og:site_name" content="http://SIMPLIFY.THATSH.IT">
-    <meta property="og:description" content="http://simplify.thatsh.it creates modern art by simplifying images to their core elements. #SimplifyThatShit">
-    <meta property="og:url" content="http://SIMPLIFY.THATSH.IT">
-    <meta property="og:title" content="">
-    <meta property="og:image" content="">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="<?php echo $SITENAME; ?>">
+    <meta property="og:description" content="<?php echo $DESCRIPTION;?>">
+    <meta property="og:url" content="http://<?php echo $SERVERNAME;?>">
+    <meta property="og:title" content="<?php echo $SITENAME;?>">
+    
+    <?php
+        // randomize the share images (no promise this will work consistently),
+        // Facebook does a lot of caching on the meta tags.
+        $imgs = array("thumb1.jpg","thumb2.jpg","thumb3.jpg","thumb4.jpg","thumb5.jpg","thumb6.jpg"); 
+        $maxImgsToShow = 3;
+        shuffle($imgs);
+        for($i=0; $i < $maxImgsToShow; $i++){
+            echo '<meta property="og:image" content="http://'.$SERVERNAME.'/assets/imgs/share/'.$imgs[$i].'"> ';
+        }
+    ?>
 <!-- End SEO -->
 </head>
 <body>
@@ -49,17 +68,10 @@
     <div class="header">
         <div class="logo">SIMPLIFY.THATSH.IT</div>
         <p>
-            Create modern art by simplifying images to their core elements. (hit return) <br/>
+            Create modern art by simplifying images to their core elements.<br/>
             The output is a geometric composition derived from original image’s color and composition data.
         </p>
-
-        <p class="nodraganddrop" >
-            You can not drag files on a touch device. Use a desktop computer to drag and drop your own images.
-        </p>
-
     </div>
-
-    
 
     <div class="app wrapper">
         <div id="simplifyapp" class="empty">
@@ -144,7 +156,6 @@
                     Edition of 12<br/>
                 </p>
             </a></li>
-            
         </ul>
     </div>
     
@@ -157,6 +168,15 @@
         </div>
     </div>
 
+    <div class="overlay">
+        <div class="modial">
+            <p class="nodraganddrop" >
+                You can not drag files on a touch device. Use a desktop computer to drag and drop your own images.
+            </p>
+            <div class="cta-ok btn">OK</div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script>
         var dev = false;
@@ -166,6 +186,7 @@
             dev = true;
         }
 
+        // image list for touchscreens:
         var imgList = [
             "imglist/sunset.jpg",     
             "imglist/castle.jpg",
@@ -178,11 +199,12 @@
         ];
 
         function getRequirePath() {
-            if( dev == true ){
-                return 'assets/js-dev/'
-            }else{
-                return 'assets/js/'
-            }
+            // if( dev == true ){
+            //     return 'assets/js-dev/'
+            // }else{
+            //     return 'assets/js/'
+            // }
+            return <?php echo '"assets/'.$JSFOLDER.'"'; ?>;
         }
 
         // in dev mode : or make this a debug module 
@@ -194,9 +216,7 @@
         }
     </script>
     
-    <script data-main="assets/js/App" src="assets/js/_lib/require.js"></script>
-
-    
+    <script data-main="assets/<?php echo $JSFOLDER;?>/App" src="assets/<?php echo $JSFOLDER ?>/_lib/require.js"></script>
     
 </body>
 </html>

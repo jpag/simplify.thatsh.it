@@ -1,4 +1,12 @@
 @media screen and (max-width: $breakpt-med) {
+
+.header {
+	.logo {
+		width: 90%;
+		margin: auto;
+	}
+}
+
 .footer {
 	.footer-content {
 	}
@@ -15,6 +23,11 @@
 }
 
 @media screen and (max-width: $breakpt-sml) {
+
+.export-wrapper {
+	width: 90%;
+	margin: auto;
+}
 
 .footer {
 	height: auto;

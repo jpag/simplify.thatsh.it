@@ -143,6 +143,8 @@ return BaseView.extend({
 					app.testTouch == true
 				){
 					self.drawNextImage();
+				}else{
+					self.$doc.trigger(Events.dom.forceResize);			
 				}
 			}
 		});
@@ -800,13 +802,14 @@ return BaseView.extend({
 			var colorData = this.getPixelRGB( cpx, cpy, this.originctx , false);
 			var cur, dest;
 
-			var increment = Math.random() * 0.1;
+			//var increment = Math.random() * 0.1;
+			var increment = Math.random() * 0.2;
 			if( increment < 0.02 ){
 				increment = 0.02;
 			}
 
 			if( this.devswitches.animate == false ){
-				increment = 1000;	
+				increment = 750; //1000;	
 			}else{
 				if( type == 'rect' ){
 					dest = [shape.w,shape.h];
@@ -850,7 +853,7 @@ return BaseView.extend({
 							});
 
 			this.previousRotateDirection = this.previousRotateDirection * -1;
-			trace(s + ' shape type ' + type + '  - ' + amountOfPi );
+			// trace(s + ' shape type ' + type + '  - ' + amountOfPi );
 		}
 
 		if( this.devswitches.animate == true ){
@@ -867,9 +870,8 @@ return BaseView.extend({
 			this.alphaFadeCanvas.ctx.drawImage( this.grayScaleCanvas.cv, 0,0, this.alphaFadeCanvas.cv.height, this.alphaFadeCanvas.cv.height);
 			this.alphaFadeCanvas.dat = this.alphaFadeCanvas.ctx.getImageData(0,0,this.alphaFadeCanvas.cv.height,this.alphaFadeCanvas.cv.height);
 			
-			// this.alphaFadeCanvas = null;
-			this.incrementAlpha = 0.0000001;
-			this.alphaBkgd = [];
+			// this.incrementAlpha = 0.0000001;
+			// this.alphaBkgd = [];
 
 			this.animating = true;
 			this.animationCycle();
@@ -879,7 +881,7 @@ return BaseView.extend({
 	animationCycle : function() {
 		//var incremental = 0.1;
 		var numCompleted = 0;
-		var snapRange = 0.5;
+		var snapRange = 1; // 0.5
 		var animatebkgd = false;
 
 		if( this.animating == false ){
@@ -890,7 +892,7 @@ return BaseView.extend({
 			numCompleted = this.pixelateBkgdToSolid();
 		}else{
 			this.bkgdalpha = this.bkgdalpha + (Math.abs(this.bkgdalpha - 1) * 0.03);
-			if( this.bkgdalpha >= 0.99 ) {
+			if( this.bkgdalpha >= 0.95 ) {
 				this.bkgdalpha = 1;
 				numCompleted += 1;
 			}
@@ -909,6 +911,8 @@ return BaseView.extend({
 
 			this.ctx.fillStyle = 'RGBA('+shape.rgb.r+','+shape.rgb.g+','+shape.rgb.b+',1)';
 			
+			// determine what shape type it is and how to draw it:
+			// rect and line have similar attributes, arc and polygon have similar attributes
 			if( shape.type == 'rect' || shape.type == 'line' ){
 				var newW = shape.current[0] + Math.abs((shape.current[0] - shape.destination[0]) * incremental);
 				var newH = shape.current[1] + Math.abs((shape.current[1] - shape.destination[1]) * incremental);
@@ -969,6 +973,7 @@ return BaseView.extend({
 				this.ctx.rotate(shape.rotation); // rotate around the start point of your line
 
 				if( shape.type == 'polygon' ){
+					// for POLYGON
 					if( newR == shape.destination[0]){
 						numCompleted += 1;
 					}	
@@ -990,6 +995,7 @@ return BaseView.extend({
 					this.ctx.closePath();
 
 				}else{
+					// for ARC
 					if( shape.strokeit ){
 						shape.currentAmountOfPi += (shape.amountOfPi - shape.currentAmountOfPi) * 0.99;
 					}else{
@@ -1001,13 +1007,12 @@ return BaseView.extend({
 						if( dif <= 0.25 ){ 
 							numCompleted += 1;
 							shape.currentAmountOfPi = shape.amountOfPi;
-
-							trace(' completed ---');
+							trace(' completed --- ');
 						}else{
 							trace( ' dif of pi ' + dif )
 						}
 					}	
-					trace( newR + ' rv ' + shape.destination[0] + ' ' + shape.currentAmountOfPi + ' vs ' + shape.amountOfPi );
+					//trace( newR + ' rv ' + shape.destination[0] + ' ' + shape.currentAmountOfPi + ' vs ' + shape.amountOfPi );
 					this.ctx.arc(0, 0, newR, 0, shape.currentAmountOfPi, shape.clockwise);
 				}
 				
@@ -1050,6 +1055,7 @@ return BaseView.extend({
 		     });
 	},
 
+	/*
 	pixelateBkgdToSolid : function() {
 		var numCompleted = 0;
 		// we are going to individually draw the pixels by alpha of the gray scale canvas.
@@ -1121,6 +1127,7 @@ return BaseView.extend({
 
 		return numCompleted;
 	},
+	*/
 
 	findHighContrastShapes : function(grayScaleCanvas) {
 		// everything is pixelated. so just look for rectangles, 
