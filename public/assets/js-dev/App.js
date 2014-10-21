@@ -103,7 +103,7 @@ require([
 		comp : null,
 		
 		testerror : false,
-		testTouch : false,
+		testTouch : true,
 			
 		//composites : [],
 

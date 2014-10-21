@@ -107,6 +107,8 @@ return BaseView.extend({
 		this.ctx = this.$el.find("#visible-canvas")[0].getContext('2d');
 		this.originctx = this.$el.find("#origin-canvas")[0].getContext('2d');
 
+		this.testimglist = this.shuffleArray(window.imgList);
+
 		if( this.devswitches.showMapping == true ){
 
 			this.devcanvas = $("<canvas id='debug-canvas' width='300' height='300' />", {
@@ -117,7 +119,21 @@ return BaseView.extend({
 
 			this.devctx = this.devcanvas[0].getContext('2d');
 		}
+	},
 
+	shuffleArray : function(array) {
+	  var currentIndex = array.length, temporaryValue, randomIndex ;
+	  // While there remain elements to shuffle...
+	  while (0 !== currentIndex) {
+		// Pick a remaining element...
+		randomIndex = Math.floor(Math.random() * currentIndex);
+		currentIndex -= 1;
+		// And swap it with the current element.
+		temporaryValue = array[currentIndex];
+		array[currentIndex] = array[randomIndex];
+		array[randomIndex] = temporaryValue;
+	  }
+	  return array;
 	},
 
 	bindEvents : function() {
@@ -136,6 +152,7 @@ return BaseView.extend({
 				
 				if( self.testImage >= self.testimglist.length ){
 					self.testImage = 0;
+					self.testimglist = self.shuffleArray(window.imgList);
 				}
 
 				if( self.devswitches.test == true  ||
