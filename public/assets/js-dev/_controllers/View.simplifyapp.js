@@ -1052,7 +1052,13 @@ return BaseView.extend({
 		trace( numCompleted + "=="+ (this.plotted.length+1) );
 		if( numCompleted == (this.plotted.length+1) ){
 			trace(' num Completed has maxed');
-			this.showExport();
+			if( Modernizr.touch == true ||
+				app.testTouch == true
+				){
+				trace(' do nothing no download button');
+			}else{
+				this.showExport();
+			}
 			return;
 		}
 		//trace(' - new frame - \n')
