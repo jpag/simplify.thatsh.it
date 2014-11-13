@@ -1,0 +1,6 @@
+.DS_Store
+
+# Logs
+scripts/logs
+*.log
+
