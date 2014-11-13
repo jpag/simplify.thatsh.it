@@ -1,21 +1,14 @@
 ## simplify it
 
-- rotation / shapes are more different / more varity
-- export feature
+http://simplify.thatsh.it/
 
-- server / folder save write to server
-- export/ save to desktop
-
-
+## Documentation to follow...
 
 ## references
-	going paperjs
-	http://paperjs.org/download/
-	
+	http://html5demos.com/file-api#view-source
+ 	http://robertnyman.com/2011/03/10/using-html5-canvas-drag-and-drop-and-file-api-to-offer-the-cure/
+ 	http://www.html5rocks.com/en/tutorials/dnd/basics/
+
 	http://stackoverflow.com/questions/20586339/shape-detection-javascript-canvas
 	http://kevinmehall.net/2009/line-and-shape-recognition
 	http://www.createjs.com/#!/EaselJS/ ?
-
-## TODO :
-
-## Done :
